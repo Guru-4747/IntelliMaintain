@@ -48,7 +48,7 @@ The hardest test is cross-severity generalisation: the models are trained on 0.0
 
 Under added noise on the cross-load test, the RandomForest accuracy falls from 1.0000 on clean data to 0.4058 at 5 dB signal-to-noise ratio. The spectrogram CNN trained with noise augmentation keeps 0.9618 at 5 dB, and a RandomForest trained with the same augmentation reaches 0.9652, so most of the robustness comes from the augmentation.
 
-Isotonic calibration reduced the expected calibration error of the RandomForest from 0.1203 to 0.0163 on the unseen 3 hp load, so its confidence values can be read as probabilities.
+Isotonic calibration reduced the expected calibration error of the RandomForest from 0.1203 to 0.0164 on the unseen 3 hp load, so its confidence values can be read as probabilities.
 
 # 6. What the physics check achieves on CWRU
 
