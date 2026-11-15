@@ -1,0 +1,7 @@
+file_name,url,publisher,type,notes
+skf_bearing_failures_and_their_causes.pdf,https://www.skf.com/binaries/pub12/Images/0901d1968064c148-Bearing-failures—14219_2-EN_tcm_12-297619.pdf,SKF,manufacturer guide,Bearing failures and their causes (failure modes / ISO 15243)
+skf_bearing_damage_training_transcript.pdf,https://www.skf.com/skf/campaign/aptitudearchive/training/brgdam_v2/presentation_content/external_files/Brg%20damage%20transcript%20R32.pdf,SKF,training transcript,Bearing damage analysis training
+nsk_bearing_doctor.pdf,https://nsk.com/content/dam/nsk/eu/en_gb/documents/bearings-europe/Bearing%20Doctor.pdf,NSK,manufacturer guide,Bearing Doctor - diagnosis of bearing problems
+nsk_bearing_handling_e7005c.pdf,https://www.nsk.com/common/data/ctrgPdf/bearings/e7005c.pdf,NSK,manufacturer guide,Care and maintenance of bearings
+arxiv_2003.03315_dl_rotating_machinery_benchmark.pdf,https://arxiv.org/pdf/2003.03315,arXiv (open access),paper,Deep learning for rotating machinery diagnosis - open benchmark study (uses CWRU)
+arxiv_1511.03174_spectrum_searching_bearing.pdf,https://arxiv.org/pdf/1511.03174,arXiv (open access),paper,Fault diagnosis of rolling element bearings with a spectrum searching method

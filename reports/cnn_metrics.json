@@ -1,0 +1,239 @@
+{
+  "n_windows": 4643,
+  "epochs": 14,
+  "device": "mps",
+  "architecture": "4 conv blocks (16-32-64-64) + global avg pool + dropout + linear, ~61k params",
+  "input": "64x64 standardised log-power STFT (nperseg 128, 75% overlap)",
+  "random_split": {
+    "accuracy": 1.0,
+    "macro_f1": 1.0
+  },
+  "cross_load_noaug": {
+    "accuracy": 1.0,
+    "macro_f1": 1.0,
+    "fault_type_accuracy": 1.0,
+    "temperature": 1.4607,
+    "ece_raw": 0.008,
+    "ece_temperature_scaled": 0.0522,
+    "brier_temperature_scaled": 0.0054
+  },
+  "cross_load_aug": {
+    "accuracy": 1.0,
+    "macro_f1": 1.0,
+    "fault_type_accuracy": 1.0,
+    "temperature": 1.0,
+    "ece_raw": 0.0111,
+    "ece_temperature_scaled": 0.0111,
+    "brier_temperature_scaled": 0.0012,
+    "ece_10dB_raw": 0.0185,
+    "ece_10dB_temperature_scaled": 0.0185
+  },
+  "cross_severity": {
+    "accuracy": 0.4359,
+    "macro_f1": 0.4251,
+    "per_class_recall": {
+      "Normal": 1.0,
+      "Ball": 1.0,
+      "Inner race": 0.028,
+      "Outer race": 0.0
+    }
+  },
+  "noise_robustness_cross_load": {
+    "noaug": {
+      "clean": 1.0,
+      "20dB": 1.0,
+      "10dB": 0.461,
+      "5dB": 0.3676,
+      "0dB": 0.101
+    },
+    "aug": {
+      "clean": 1.0,
+      "20dB": 1.0,
+      "10dB": 0.9966,
+      "5dB": 0.9618,
+      "0dB": 0.6919
+    },
+    "rf_aug": {
+      "clean": 0.9949,
+      "20dB": 0.9949,
+      "10dB": 0.9975,
+      "5dB": 0.9652,
+      "0dB": 0.6885
+    }
+  },
+  "train_seconds": 111.3,
+  "chart_data": {
+    "cm_cnn_cross_load": {
+      "title": "Spectrogram CNN - cross-load (train 0-2 HP, test 3 HP)",
+      "labels": [
+        "B_007",
+        "B_014",
+        "B_021",
+        "IR_007",
+        "IR_014",
+        "IR_021",
+        "Normal",
+        "OR_007",
+        "OR_014",
+        "OR_021"
+      ],
+      "matrix": [
+        [
+          117,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          118,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          118,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          119,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          117,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          118,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          117,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          118,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          118,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          118
+        ]
+      ]
+    },
+    "cm_cnn_cross_severity": {
+      "title": "Spectrogram CNN - cross-severity (unseen 0.021 in)",
+      "labels": [
+        "Normal",
+        "Ball",
+        "Inner race",
+        "Outer race"
+      ],
+      "matrix": [
+        [
+          234,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          471,
+          0,
+          0
+        ],
+        [
+          0,
+          457,
+          13,
+          0
+        ],
+        [
+          0,
+          0,
+          472,
+          0
+        ]
+      ]
+    }
+  }
+}

@@ -1,0 +1,41 @@
+file,label,truth,physics,snr_Outer race,snr_Inner race,snr_Ball
+97,Normal,Normal,Normal,2.94,4.08,3.37
+98,Normal,Normal,Normal,2.63,3.93,3.4
+99,Normal,Normal,Normal,2.71,3.41,3.1
+100,Normal,Normal,Normal,3.9,4.21,3.74
+118,B_007,Ball,Outer race,10.47,7.08,6.57
+119,B_007,Ball,Inner race,8.64,9.07,5.84
+120,B_007,Ball,Inner race,13.22,15.07,7.78
+121,B_007,Ball,Inner race,7.16,9.75,4.43
+185,B_014,Ball,Normal,2.61,2.92,3.14
+186,B_014,Ball,Normal,2.6,2.84,3.54
+187,B_014,Ball,Normal,2.55,2.5,3.01
+188,B_014,Ball,Normal,2.51,2.64,3.95
+222,B_021,Ball,Inner race,6.68,11.63,4.8
+223,B_021,Ball,Inner race,9.2,12.36,4.86
+224,B_021,Ball,Inner race,13.66,18.25,6.57
+225,B_021,Ball,Inner race,12.55,18.5,6.08
+105,IR_007,Inner race,Inner race,32.48,125.83,21.23
+106,IR_007,Inner race,Inner race,38.1,138.65,22.87
+107,IR_007,Inner race,Inner race,35.47,136.54,17.54
+108,IR_007,Inner race,Inner race,50.71,134.88,23.01
+169,IR_014,Inner race,Inner race,22.67,57.65,23.14
+170,IR_014,Inner race,Inner race,22.45,52.63,20.69
+171,IR_014,Inner race,Inner race,17.22,43.05,19.69
+172,IR_014,Inner race,Inner race,15.86,38.93,18.29
+209,IR_021,Inner race,Inner race,44.45,129.91,27.96
+210,IR_021,Inner race,Inner race,30.66,99.41,15.13
+211,IR_021,Inner race,Inner race,43.32,122.23,17.28
+212,IR_021,Inner race,Inner race,42.07,106.55,16.77
+130,OR_007,Outer race,Outer race,504.13,114.31,141.04
+131,OR_007,Outer race,Outer race,575.62,146.17,153.98
+132,OR_007,Outer race,Outer race,478.81,142.7,127.77
+133,OR_007,Outer race,Outer race,485.16,144.72,102.56
+197,OR_014,Outer race,Inner race,7.96,12.15,6.9
+198,OR_014,Outer race,Inner race,9.87,13.97,7.15
+199,OR_014,Outer race,Inner race,12.23,14.22,5.64
+200,OR_014,Outer race,Inner race,6.36,10.09,5.23
+234,OR_021,Outer race,Outer race,66.28,15.97,32.02
+235,OR_021,Outer race,Outer race,60.25,14.99,29.97
+236,OR_021,Outer race,Outer race,58.28,14.12,30.41
+237,OR_021,Outer race,Outer race,58.72,23.66,10.34

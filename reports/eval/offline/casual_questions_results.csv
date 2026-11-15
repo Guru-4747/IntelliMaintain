@@ -1,0 +1,25 @@
+question,expected_intent,intent,intent_ok,interpreted_as,hit@5_raw,top1_raw,hit@5_normalised,top1_normalised
+hiii,greeting,greeting,1.0,hii,,,,
+hello there!,greeting,greeting,1.0,hello there,,,,
+thx a lot,thanks,thanks,1.0,thanks lot,,,,
+what can u do,help,help,1.0,what can you do,,,,
+yo my bering is makin weird grindin noise wat shud i do??,knowledge,knowledge,1.0,yo bearing making weird grinding noise vibration impacting defect,1.0,1.0,1.0,1.0
+how do i grease it pls,knowledge,knowledge,1.0,grease lubrication relubrication interval,1.0,0.0,1.0,1.0
+how often shud i oil the bearings,knowledge,knowledge,1.0,often oil bearings lubrication relubrication grease interval,0.0,0.0,1.0,0.0
+is it safe to change the bearing without stopping the motor,knowledge,knowledge,1.0,safe change bearing without stopping motor replacement mounting procedure safety,0.0,0.0,1.0,1.0
+wat safety stuff b4 i open the machine,knowledge,knowledge,1.0,safety stuff before open machine lockout tagout isolate energy,1.0,1.0,1.0,1.0
+kurtosis 8 means wat,knowledge,knowledge,1.0,kurtosis 8 means,1.0,1.0,1.0,1.0
+my motor is getting really hot n noisy,knowledge,knowledge,1.0,motor getting really hot noisy vibration impacting bearing defect temperature ov,0.0,0.0,1.0,1.0
+whats the diff between inner n outer race fault,knowledge,knowledge,1.0,diff between inner outer race fault BPFO,1.0,0.0,1.0,1.0
+outer ring damaged wat to do,knowledge,knowledge,1.0,outer ring damaged race BPFO spall fatigue failure mode,0.0,0.0,1.0,0.0
+balls r damaged in the bearing,knowledge,knowledge,1.0,balls damaged bearing rolling element BSF spall fatigue failure mode,0.0,0.0,1.0,0.0
+vibrations high after greasing is it broken,knowledge,knowledge,1.0,vibrations high after greasing broken lubrication relubrication grease interval ,1.0,1.0,1.0,1.0
+shaft not aligned properly can that kill the bearing,knowledge,knowledge,1.0,shaft align properly kill bearing,0.0,0.0,0.0,0.0
+how to take out old bearing without damaging shaft,knowledge,knowledge,1.0,take out old bearing without damaging shaft dismounting puller removal damage sp,1.0,0.0,1.0,1.0
+which iso std for bearing failure types,knowledge,knowledge,1.0,iso std bearing failure types,1.0,0.0,1.0,0.0
+best chicken biryani recipe,out_of_scope,out_of_scope,1.0,best chicken biryani recipe,,,,
+who won the match yesterday,out_of_scope,out_of_scope,1.0,won matches yesterday,,,,
+is ths bearing ok?,diagnosis,diagnosis,1.0,bearing healthy normal condition baseline,,,,
+???,diagnosis,diagnosis,1.0,???,,,,
+can i keep running it till friday,diagnosis,diagnosis,1.0,keep running still friday severity urgency stage of degradation replacement alar,0.0,0.0,1.0,1.0
+vibraton too high whats wrong,diagnosis,diagnosis,1.0,vibration too high wrong,,,,

@@ -1,0 +1,25 @@
+question,has_signal,expected_intent,relevant_sources
+hiii,0,greeting,
+hello there!,0,greeting,
+thx a lot,0,thanks,
+what can u do,0,help,
+yo my bering is makin weird grindin noise wat shud i do??,0,knowledge,kb01_vibration_diagnosis_fundamentals.md;kb08_condition_monitoring_program.md;kb06_lubrication_and_contamination.md;kb10_non_bearing_vibration_sources.md;kb09_synthetic_maintenance_logs.md
+how do i grease it pls,0,knowledge,kb06_lubrication_and_contamination.md
+how often shud i oil the bearings,0,knowledge,kb06_lubrication_and_contamination.md
+is it safe to change the bearing without stopping the motor,0,knowledge,kb07_inspection_and_replacement_procedure.md
+wat safety stuff b4 i open the machine,0,knowledge,kb07_inspection_and_replacement_procedure.md
+kurtosis 8 means wat,0,knowledge,kb01_vibration_diagnosis_fundamentals.md
+my motor is getting really hot n noisy,0,knowledge,kb06_lubrication_and_contamination.md;kb08_condition_monitoring_program.md;kb01_vibration_diagnosis_fundamentals.md;kb10_non_bearing_vibration_sources.md
+whats the diff between inner n outer race fault,0,knowledge,kb01_vibration_diagnosis_fundamentals.md;kb04_inner_race_faults.md;kb03_outer_race_faults.md
+outer ring damaged wat to do,0,knowledge,kb03_outer_race_faults.md
+balls r damaged in the bearing,0,knowledge,kb05_ball_rolling_element_faults.md
+vibrations high after greasing is it broken,0,knowledge,kb06_lubrication_and_contamination.md
+shaft not aligned properly can that kill the bearing,0,knowledge,kb10_non_bearing_vibration_sources.md
+how to take out old bearing without damaging shaft,0,knowledge,kb07_inspection_and_replacement_procedure.md
+which iso std for bearing failure types,0,knowledge,kb07_inspection_and_replacement_procedure.md
+best chicken biryani recipe,0,out_of_scope,
+who won the match yesterday,0,out_of_scope,
+is ths bearing ok?,1,diagnosis,
+???,1,diagnosis,
+can i keep running it till friday,1,diagnosis,kb08_condition_monitoring_program.md;kb04_inner_race_faults.md;kb03_outer_race_faults.md;kb05_ball_rolling_element_faults.md
+vibraton too high whats wrong,1,diagnosis,

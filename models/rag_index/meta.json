@@ -1,0 +1,27 @@
+{
+  "embedder": "lsa",
+  "embed_model": "tfidf-lsa-256",
+  "dim": 256,
+  "n_chunks": 299,
+  "n_pages": 198,
+  "sources": [
+    "arxiv_1511.03174_spectrum_searching_bearing.pdf",
+    "arxiv_2003.03315_dl_rotating_machinery_benchmark.pdf",
+    "kb01_vibration_diagnosis_fundamentals.md",
+    "kb02_bearing_defect_frequencies.md",
+    "kb03_outer_race_faults.md",
+    "kb04_inner_race_faults.md",
+    "kb05_ball_rolling_element_faults.md",
+    "kb06_lubrication_and_contamination.md",
+    "kb07_inspection_and_replacement_procedure.md",
+    "kb08_condition_monitoring_program.md",
+    "kb09_synthetic_maintenance_logs.md",
+    "kb10_non_bearing_vibration_sources.md",
+    "nsk_bearing_doctor.pdf",
+    "nsk_bearing_handling_e7005c.pdf",
+    "skf_bearing_damage_training_transcript.pdf"
+  ],
+  "chunk_tokens": 600,
+  "chunk_overlap": 100,
+  "build_seconds": 11.3
+}

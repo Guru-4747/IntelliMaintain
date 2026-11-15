@@ -1,0 +1,81 @@
+policy,injected_error,case_id,truth,injected,abstained,final_fault,correct,error_propagated,physics_status,flagged,conflict_flag,citation_coverage,faithfulness
+trust_ml,False,TC01,Normal,,0.0,Normal,1.0,0.0,consistent,0.0,0.0,1.0,0.8571428571428571
+trust_ml,True,TC01,Normal,Inner race,0.0,Inner race,0.0,1.0,conflict,1.0,1.0,1.0,1.0
+trust_ml,True,TC01,Normal,Outer race,0.0,Outer race,0.0,1.0,conflict,1.0,1.0,1.0,1.0
+trust_ml,True,TC01,Normal,Ball,0.0,Ball,0.0,1.0,inconclusive,1.0,0.0,1.0,1.0
+abstain,False,TC01,Normal,,0.0,Normal,1.0,0.0,consistent,0.0,0.0,1.0,0.8571428571428571
+abstain,True,TC01,Normal,Inner race,1.0,Unknown,0.0,0.0,conflict,1.0,1.0,1.0,1.0
+abstain,True,TC01,Normal,Outer race,1.0,Unknown,0.0,0.0,conflict,1.0,1.0,1.0,1.0
+abstain,True,TC01,Normal,Ball,0.0,Ball,0.0,1.0,inconclusive,1.0,0.0,1.0,1.0
+trust_ml,False,TC02,Inner race,,0.0,Inner race,1.0,0.0,consistent,0.0,0.0,1.0,1.0
+trust_ml,True,TC02,Inner race,Outer race,0.0,Outer race,0.0,1.0,conflict,1.0,1.0,1.0,1.0
+trust_ml,True,TC02,Inner race,Ball,0.0,Ball,0.0,1.0,conflict,1.0,1.0,1.0,1.0
+trust_ml,True,TC02,Inner race,Normal,0.0,Normal,0.0,1.0,conflict,1.0,1.0,1.0,0.8571428571428571
+abstain,False,TC02,Inner race,,0.0,Inner race,1.0,0.0,consistent,0.0,0.0,1.0,1.0
+abstain,True,TC02,Inner race,Outer race,1.0,Unknown,0.0,0.0,conflict,1.0,1.0,1.0,1.0
+abstain,True,TC02,Inner race,Ball,1.0,Unknown,0.0,0.0,conflict,1.0,1.0,1.0,1.0
+abstain,True,TC02,Inner race,Normal,1.0,Unknown,0.0,0.0,conflict,1.0,1.0,1.0,0.8571428571428571
+trust_ml,False,TC03,Inner race,,0.0,Inner race,1.0,0.0,consistent,0.0,0.0,1.0,1.0
+trust_ml,True,TC03,Inner race,Outer race,0.0,Outer race,0.0,1.0,conflict,1.0,1.0,1.0,1.0
+trust_ml,True,TC03,Inner race,Ball,0.0,Ball,0.0,1.0,inconclusive,1.0,0.0,1.0,1.0
+trust_ml,True,TC03,Inner race,Normal,0.0,Normal,0.0,1.0,conflict,1.0,1.0,1.0,0.8571428571428571
+abstain,False,TC03,Inner race,,0.0,Inner race,1.0,0.0,consistent,0.0,0.0,1.0,1.0
+abstain,True,TC03,Inner race,Outer race,1.0,Unknown,0.0,0.0,conflict,1.0,1.0,1.0,1.0
+abstain,True,TC03,Inner race,Ball,0.0,Ball,0.0,1.0,inconclusive,1.0,0.0,1.0,1.0
+abstain,True,TC03,Inner race,Normal,1.0,Unknown,0.0,0.0,conflict,1.0,1.0,1.0,0.8571428571428571
+trust_ml,False,TC04,Inner race,,0.0,Inner race,1.0,0.0,consistent,0.0,0.0,1.0,1.0
+trust_ml,True,TC04,Inner race,Outer race,0.0,Outer race,0.0,1.0,conflict,1.0,1.0,1.0,1.0
+trust_ml,True,TC04,Inner race,Ball,0.0,Ball,0.0,1.0,conflict,1.0,1.0,1.0,1.0
+trust_ml,True,TC04,Inner race,Normal,0.0,Normal,0.0,1.0,conflict,1.0,1.0,1.0,0.8571428571428571
+abstain,False,TC04,Inner race,,0.0,Inner race,1.0,0.0,consistent,0.0,0.0,1.0,1.0
+abstain,True,TC04,Inner race,Outer race,1.0,Unknown,0.0,0.0,conflict,1.0,1.0,1.0,1.0
+abstain,True,TC04,Inner race,Ball,1.0,Unknown,0.0,0.0,conflict,1.0,1.0,1.0,1.0
+abstain,True,TC04,Inner race,Normal,1.0,Unknown,0.0,0.0,conflict,1.0,1.0,1.0,0.8571428571428571
+trust_ml,False,TC05,Outer race,,0.0,Outer race,1.0,0.0,consistent,0.0,0.0,1.0,1.0
+trust_ml,True,TC05,Outer race,Inner race,0.0,Inner race,0.0,1.0,conflict,1.0,1.0,1.0,1.0
+trust_ml,True,TC05,Outer race,Ball,0.0,Ball,0.0,1.0,conflict,1.0,1.0,1.0,1.0
+trust_ml,True,TC05,Outer race,Normal,0.0,Normal,0.0,1.0,conflict,1.0,1.0,1.0,0.8571428571428571
+abstain,False,TC05,Outer race,,0.0,Outer race,1.0,0.0,consistent,0.0,0.0,1.0,1.0
+abstain,True,TC05,Outer race,Inner race,1.0,Unknown,0.0,0.0,conflict,1.0,1.0,1.0,1.0
+abstain,True,TC05,Outer race,Ball,1.0,Unknown,0.0,0.0,conflict,1.0,1.0,1.0,1.0
+abstain,True,TC05,Outer race,Normal,1.0,Unknown,0.0,0.0,conflict,1.0,1.0,1.0,0.8571428571428571
+trust_ml,False,TC06,Outer race,,0.0,Outer race,1.0,0.0,inconclusive,1.0,0.0,1.0,1.0
+trust_ml,True,TC06,Outer race,Inner race,0.0,Inner race,0.0,1.0,consistent,0.0,0.0,1.0,1.0
+trust_ml,True,TC06,Outer race,Ball,0.0,Ball,0.0,1.0,inconclusive,1.0,0.0,1.0,1.0
+trust_ml,True,TC06,Outer race,Normal,0.0,Normal,0.0,1.0,consistent,0.0,0.0,1.0,0.8571428571428571
+abstain,False,TC06,Outer race,,0.0,Outer race,1.0,0.0,inconclusive,1.0,0.0,1.0,1.0
+abstain,True,TC06,Outer race,Inner race,0.0,Inner race,0.0,1.0,consistent,0.0,0.0,1.0,1.0
+abstain,True,TC06,Outer race,Ball,0.0,Ball,0.0,1.0,inconclusive,1.0,0.0,1.0,1.0
+abstain,True,TC06,Outer race,Normal,0.0,Normal,0.0,1.0,consistent,0.0,0.0,1.0,0.8571428571428571
+trust_ml,False,TC07,Outer race,,0.0,Outer race,1.0,0.0,consistent,0.0,0.0,1.0,1.0
+trust_ml,True,TC07,Outer race,Inner race,0.0,Inner race,0.0,1.0,conflict,1.0,1.0,1.0,1.0
+trust_ml,True,TC07,Outer race,Ball,0.0,Ball,0.0,1.0,conflict,1.0,1.0,1.0,1.0
+trust_ml,True,TC07,Outer race,Normal,0.0,Normal,0.0,1.0,conflict,1.0,1.0,1.0,0.8571428571428571
+abstain,False,TC07,Outer race,,0.0,Outer race,1.0,0.0,consistent,0.0,0.0,1.0,1.0
+abstain,True,TC07,Outer race,Inner race,1.0,Unknown,0.0,0.0,conflict,1.0,1.0,1.0,1.0
+abstain,True,TC07,Outer race,Ball,1.0,Unknown,0.0,0.0,conflict,1.0,1.0,1.0,1.0
+abstain,True,TC07,Outer race,Normal,1.0,Unknown,0.0,0.0,conflict,1.0,1.0,1.0,0.8571428571428571
+trust_ml,False,TC08,Ball,,0.0,Ball,1.0,0.0,inconclusive,1.0,0.0,1.0,1.0
+trust_ml,True,TC08,Ball,Inner race,0.0,Inner race,0.0,1.0,consistent,0.0,0.0,1.0,1.0
+trust_ml,True,TC08,Ball,Outer race,0.0,Outer race,0.0,1.0,inconclusive,1.0,0.0,1.0,1.0
+trust_ml,True,TC08,Ball,Normal,0.0,Normal,0.0,1.0,consistent,0.0,0.0,1.0,0.8571428571428571
+abstain,False,TC08,Ball,,0.0,Ball,1.0,0.0,inconclusive,1.0,0.0,1.0,1.0
+abstain,True,TC08,Ball,Inner race,0.0,Inner race,0.0,1.0,consistent,0.0,0.0,1.0,1.0
+abstain,True,TC08,Ball,Outer race,0.0,Outer race,0.0,1.0,inconclusive,1.0,0.0,1.0,1.0
+abstain,True,TC08,Ball,Normal,0.0,Normal,0.0,1.0,consistent,0.0,0.0,1.0,0.8571428571428571
+trust_ml,False,TC09,Ball,,0.0,Ball,1.0,0.0,inconclusive,1.0,0.0,1.0,1.0
+trust_ml,True,TC09,Ball,Inner race,0.0,Inner race,0.0,1.0,conflict,1.0,1.0,1.0,1.0
+trust_ml,True,TC09,Ball,Outer race,0.0,Outer race,0.0,1.0,conflict,1.0,1.0,1.0,1.0
+trust_ml,True,TC09,Ball,Normal,0.0,Normal,0.0,1.0,consistent,0.0,0.0,1.0,0.8571428571428571
+abstain,False,TC09,Ball,,0.0,Ball,1.0,0.0,inconclusive,1.0,0.0,1.0,1.0
+abstain,True,TC09,Ball,Inner race,1.0,Unknown,0.0,0.0,conflict,1.0,1.0,1.0,1.0
+abstain,True,TC09,Ball,Outer race,1.0,Unknown,0.0,0.0,conflict,1.0,1.0,1.0,1.0
+abstain,True,TC09,Ball,Normal,0.0,Normal,0.0,1.0,consistent,0.0,0.0,1.0,0.8571428571428571
+trust_ml,False,TC10,Ball,,0.0,Ball,1.0,0.0,inconclusive,1.0,0.0,1.0,1.0
+trust_ml,True,TC10,Ball,Inner race,0.0,Inner race,0.0,1.0,consistent,0.0,0.0,1.0,1.0
+trust_ml,True,TC10,Ball,Outer race,0.0,Outer race,0.0,1.0,conflict,1.0,1.0,1.0,1.0
+trust_ml,True,TC10,Ball,Normal,0.0,Normal,0.0,1.0,conflict,1.0,1.0,1.0,0.8571428571428571
+abstain,False,TC10,Ball,,0.0,Ball,1.0,0.0,inconclusive,1.0,0.0,1.0,1.0
+abstain,True,TC10,Ball,Inner race,0.0,Inner race,0.0,1.0,consistent,0.0,0.0,1.0,1.0
+abstain,True,TC10,Ball,Outer race,1.0,Unknown,0.0,0.0,conflict,1.0,1.0,1.0,1.0
+abstain,True,TC10,Ball,Normal,1.0,Unknown,0.0,0.0,conflict,1.0,1.0,1.0,0.8571428571428571
