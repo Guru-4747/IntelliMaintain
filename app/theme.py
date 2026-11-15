@@ -72,7 +72,8 @@ section[data-testid="stSidebar"] h3 {{
 .im-brand-logo {{
   width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center;
   background: radial-gradient(circle at 30% 30%, rgba(47,140,255,.45), rgba(47,140,255,.08));
-  border:1px solid {BORDER}; box-shadow: 0 0 18px rgba(47,140,255,.45); font-size:1.5rem;
+  border:1px solid {BORDER}; box-shadow: 0 0 18px rgba(47,140,255,.45); font-size:1rem;
+  font-weight:800; letter-spacing:.04em; color:{TEXT};
 }}
 .im-brand-name {{ font-size:1.25rem; font-weight:700; color:{TEXT}; line-height:1.1; }}
 .im-brand-sub {{ font-size:.78rem; color:{MUTED}; }}
@@ -200,7 +201,7 @@ def esc(text) -> str:
 
 def brand_html() -> str:
     return (
-        "<div class='im-brand'><div class='im-brand-logo'>⚙️</div><div>"
+        "<div class='im-brand'><div class='im-brand-logo'>IM</div><div>"
         "<div class='im-brand-name'>IntelliMaintain</div>"
         "<div class='im-brand-sub'>AI-Powered Predictive Maintenance</div></div></div>"
     )
@@ -210,7 +211,7 @@ def status_html(model_ok: bool, index_ok: bool) -> str:
     ok = model_ok and index_ok
     color = GREEN if ok else RED
     rows = (f"<div style='margin-top:.35rem;color:{MUTED};font-size:.78rem'>"
-            f"Classifier {'✅' if model_ok else '❌'} &nbsp;·&nbsp; Knowledge index {'✅' if index_ok else '❌'}</div>")
+            f"Classifier {'ready' if model_ok else 'missing'} &nbsp;·&nbsp; Knowledge index {'ready' if index_ok else 'missing'}</div>")
     return (f"<div class='im-status'><span class='im-dot' style='color:{color};background:{color}'></span>"
             f"<b>System Status</b><div style='color:{color};font-size:.8rem;margin-left:1.3rem'>"
             f"{'All systems online' if ok else 'Setup incomplete'}</div>{rows}</div>"
@@ -237,7 +238,7 @@ def card_html(icon: str, label: str, value: str, sub: str = "", color: str = TEX
         bar_html = (f"<div class='im-bar'><div style='width:{pct:.0f}%;background:{bar_color or color};"
                     f"box-shadow:0 0 10px {bar_color or color}'></div></div>")
     return (
-        f"<div class='im-card'><div class='im-card-label'><span class='im-card-icon'>{icon}</span>{esc(label)}</div>"
+        f"<div class='im-card'><div class='im-card-label'>{f"<span class='im-card-icon'>{icon}</span>" if icon else ''}{esc(label)}</div>"
         f"<div class='im-card-value' style='color:{color}'>{esc(value)}</div>"
         f"<div class='im-card-sub'>{esc(sub)}</div>{bar_html}</div>"
     )

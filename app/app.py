@@ -36,7 +36,7 @@ from intellimaintain.security import redact  # noqa: E402
 
 MAX_LLM_RUNS = int(os.getenv("IM_MAX_LLM_RUNS_PER_SESSION", "30"))
 
-st.set_page_config(page_title="IntelliMaintain", page_icon="⚙️", layout="wide")
+st.set_page_config(page_title="IntelliMaintain", layout="wide")
 st.markdown(theme.CSS, unsafe_allow_html=True)
 
 
@@ -72,7 +72,7 @@ def load_cloud_secrets() -> None:
 load_cloud_secrets()
 
 FAULT_COLOR = theme.FAULT_COLOR
-CONSISTENCY_ICON = {"consistent": "✅", "conflict": "⚠️", "inconclusive": "❔", "not_run": "–"}
+CONSISTENCY_ICON = {"consistent": "", "conflict": "", "inconclusive": "", "not_run": ""}
 
 
 # ------------------------------------------------------------------ helpers
@@ -208,7 +208,7 @@ if provider == "gemini":
     # The key is NEVER typed into or shown by the interface: it is read privately from .env (laptop)
     # or from the app's Secrets (online). The page only shows whether one is configured.
     if gemini_key_available():
-        st.sidebar.markdown("🔐 Gemini key: **configured** (kept private on the server)")
+        st.sidebar.markdown("Gemini key: **configured** (kept private on the server)")
     else:
         st.sidebar.warning("Gemini key not configured. Add GEMINI_API_KEY to the .env file (laptop) or to "
                            "Settings → Secrets (online). Until then the offline generator answers.")
@@ -244,7 +244,7 @@ st.sidebar.markdown(theme.status_html(status["model"], status["index"]), unsafe_
 st.markdown(theme.hero_html(), unsafe_allow_html=True)
 
 tab_diag, tab_results, tab_reviews, tab_about = st.tabs(
-    ["🔍 Diagnose", "📊 Model & evaluation results", "📝 Review log", "ℹ️ About"])
+    ["Diagnose", "Model & evaluation results", "Review log", "About"])
 
 with tab_diag:
     c1, c2 = st.columns([2, 1])
@@ -293,7 +293,7 @@ with tab_diag:
         st.session_state.pop("diag_cache", None)
     chat: list[dict] = st.session_state.setdefault("chat", [])
 
-    st.subheader("💬 Chat with the copilot")
+    st.subheader("Chat with the copilot")
     st.caption("Ask anything in your own words — about this bearing, its data, the CWRU dataset, the models or "
                "maintenance. Follow-up questions like “why?” or “can I keep running it?” work too."
                + (" A signal is loaded, so answers use its diagnosis." if x is not None else
@@ -301,15 +301,15 @@ with tab_diag:
                                                                          else ".")))
     ready = status["model"] and status["index"]
     b1, b2, _ = st.columns([1.3, 1, 4])
-    run_full = b1.button("▶ Run diagnosis", type="primary", disabled=not ready or x is None,
+    run_full = b1.button("Run diagnosis", type="primary", disabled=not ready or x is None,
                          help="Full diagnosis of the loaded signal (you can also just type a question below)")
-    if b2.button("🧹 New chat", disabled=not chat):
+    if b2.button("New chat", disabled=not chat):
         st.session_state["chat"] = []
         st.session_state.pop("diag", None)
         st.rerun()
 
     for msg in chat:
-        with st.chat_message(msg["role"], avatar="🧑‍🔧" if msg["role"] == "user" else "⚙️"):
+        with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
             if msg.get("note"):
                 st.caption(msg["note"])
@@ -341,15 +341,15 @@ with tab_diag:
                                   ml=cache.get("ml"), ff=cache.get("ff"))
                     if x is not None and d.ml_result is not None:
                         st.session_state["diag_cache"] = {"ml": d.ml_result, "ff": d.fault_frequencies}
-                    note = f"{'✅ Gemini, verified' if d.answer_source.endswith('(verified)') else d.answer_source}"
+                    note = f"{'Gemini, verified' if d.answer_source.endswith('(verified)') else d.answer_source}"
                     if any(e.url for e in d.evidence):
-                        note += " · 🌐 includes online sources"
+                        note += " · includes online sources"
                     if d.warnings:
                         note += f" · {len(d.warnings)} note(s) below"
                     reply = d.answer or d.summary
                     if d.fault_mechanism and d.fault_type != "Normal" and d.question_focus in ("diagnosis",
                                                                                                "mechanism"):
-                        reply += "\n\n**🔧 How this fault occurs:** " + d.fault_mechanism
+                        reply += "\n\n**How this fault occurs:** " + d.fault_mechanism
                     chat.append({"role": "assistant", "content": reply, "note": note})
                     if d.answer_source != "assistant":
                         st.session_state["diag"] = d
@@ -367,22 +367,22 @@ with tab_diag:
         st.subheader("1 · Prediction")
         m1, m2, m3, m4 = st.columns(4)
         color = FAULT_COLOR.get(d.fault_type, theme.MUTED)
-        fault_icon = {"Normal": "💚", "Unknown": "❔"}.get(d.fault_type, "⚠️")
+        fault_icon = ""
         m1.markdown(theme.card_html(fault_icon, "Fault type", d.fault_type,
                                     "Advisory — human review required", color=color), unsafe_allow_html=True)
         if d.ml_result:
             conf = d.ml_result.confidence
             conf_color = theme.GREEN if conf >= 0.85 else theme.ORANGE if conf >= config.CONFIDENCE_THRESHOLD \
                 else theme.RED
-            m2.markdown(theme.card_html("🎯", "ML class / confidence", f"{d.ml_result.label} · {conf:.0%}",
+            m2.markdown(theme.card_html("", "ML class / confidence", f"{d.ml_result.label} · {conf:.0%}",
                                         "Calibrated probability", color=theme.TEXT, bar=conf, bar_color=conf_color),
                         unsafe_allow_html=True)
             an = d.ml_result.anomaly_score
-            m3.markdown(theme.card_html("📈", "Anomaly score", f"{an:.2f}", "0 = healthy · 1 = anomalous",
+            m3.markdown(theme.card_html("", "Anomaly score", f"{an:.2f}", "0 = healthy · 1 = anomalous",
                                         color=theme.GREEN if an < 0.3 else theme.ORANGE if an < 0.7 else theme.RED,
                                         bar=an, bar_color=theme.CYAN), unsafe_allow_html=True)
         else:
-            m2.markdown(theme.card_html("🎯", "ML class", "not used",
+            m2.markdown(theme.card_html("", "ML class", "not used",
                                         "ML tools switched off" if not use_ml else "No vibration signal given",
                                         color=theme.MUTED),
                         unsafe_allow_html=True)
@@ -415,7 +415,7 @@ with tab_diag:
                         lo, hi = ref[key]
                         own = d.ml_result.key_features[key]
                         rows.append({"indicator": name, "this signal": own, f"CWRU {ref['cwru_class']}": f"{lo} – {hi}",
-                                     "": "✅ inside" if lo <= own <= hi else "⬆ above" if own > hi else "⬇ below"})
+                                     "": "inside" if lo <= own <= hi else "above" if own > hi else "below"})
                 if rows:
                     pc2.markdown(f"**Compared with CWRU class {ref['cwru_class']}** ({ref['n_recordings']} recordings)")
                     pc2.dataframe(pd.DataFrame(rows), hide_index=True)
@@ -441,14 +441,14 @@ with tab_diag:
         nq = understand(d.question, has_signal=d.ml_result is not None)
         if nq.corrections or nq.added_terms:
             fixes = ", ".join(f"{k} → {v}" for k, v in nq.corrections.items())
-            st.caption(f"🗣️ Understood your question as: “{nq.cleaned}”" + (f" (corrected: {fixes})" if fixes else "")
+            st.caption(f"Understood your question as: “{nq.cleaned}”" + (f" (corrected: {fixes})" if fixes else "")
                        + f" · intent: {nq.intent}")
         if d.answer_source.endswith("(verified)"):
-            st.success(f"✅ Written by Gemini and verified against the data and documents — "
+            st.success(f"Written by Gemini and verified against the data and documents — "
                        f"{d.grounding_score:.0%} of its sentences matched their cited source; the fault type comes "
                        f"from the classifier.")
         elif "fallback" in d.answer_source:
-            st.info("ℹ️ Gemini was unavailable or its answer could not be verified, so the offline, "
+            st.info("Gemini was unavailable or its answer could not be verified, so the offline, "
                     "data-verified answer is shown.")
         if d.insufficient_evidence:
             st.warning("Insufficient evidence — the copilot will not guess. " + d.summary)
@@ -458,7 +458,7 @@ with tab_diag:
             st.warning(w)
         st.markdown(d.explanation or "_No explanation generated._")
         if d.fault_mechanism and d.fault_type != "Normal":
-            st.markdown("**🔧 How this fault occurs**")
+            st.markdown("**How this fault occurs**")
             st.markdown(d.fault_mechanism)
         if d.recommended_actions:
             st.markdown("**Recommended actions**")
@@ -466,7 +466,7 @@ with tab_diag:
         st.caption(f"Answer source: {d.answer_source} · grounding {d.grounding_score:.0%} · "
                    f"Citation coverage {d.citation_coverage:.0%} · configuration {d.config_name} · "
                    f"LLM {d.llm_provider}:{d.llm_model} · online search {d.web_search} · [ML] = classifier, "
-                   f"[PHYS] = physics check, [n] = evidence passage n (🌐 = online source)")
+                   f"[PHYS] = physics check, [n] = evidence passage n")
 
         # ---------------- evidence panel
         st.subheader("3 · Evidence")
@@ -474,7 +474,7 @@ with tab_diag:
             st.caption("No documents retrieved (retrieval disabled or nothing relevant).")
         for i, e in enumerate(d.evidence, 1):
             if e.url:
-                with st.expander(f"🌐 [{i}] {e.source} — online (score {e.score:.2f}, web)"):
+                with st.expander(f"[{i}] {e.source} — online source (score {e.score:.2f}, web)"):
                     st.markdown(f"[Open source]({e.url}) · Wikipedia text, CC BY-SA licence")
                     st.text(e.text)
                 continue
@@ -494,16 +494,16 @@ with tab_diag:
         edited = rc2.text_area("Final text (edit if needed)",
                                value=d.summary + "\n\n" + "\n".join(f"- {a}" for a in d.recommended_actions),
                                height=160)
-        if st.button("💾 Save review"):
+        if st.button("Save review"):
             d.review_status = decision
             save_review(d, decision, reviewer, comment, edited)
             st.session_state["review_saved"] = decision
         if st.session_state.get("review_saved"):
             st.success(f"Review saved as '{st.session_state['review_saved']}' in data/reviews.csv")
         dc1, dc2 = st.columns(2)
-        dc1.download_button("⬇ Diagnosis (JSON)", d.model_dump_json(indent=2), file_name="diagnosis.json",
+        dc1.download_button("Download diagnosis (JSON)", d.model_dump_json(indent=2), file_name="diagnosis.json",
                             mime="application/json")
-        dc2.download_button("⬇ Report (Markdown)", report_markdown(d), file_name="diagnosis_report.md",
+        dc2.download_button("Download report (Markdown)", report_markdown(d), file_name="diagnosis_report.md",
                             mime="text/markdown")
 
 with tab_results:

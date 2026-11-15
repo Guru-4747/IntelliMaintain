@@ -155,13 +155,13 @@ def render() -> None:
     wrong = stress[(stress.injected_error.astype(str) == "True") & (stress.policy == "abstain")] \
         if stress is not None else None
     kpis = [
-        ("🎯", "Cross-load accuracy (RF)", g(ml, "cross_load", "RandomForest", "accuracy"), "train 0-2 HP → test 3 HP"),
-        ("🔁", "Leave-one-load-out", g(ml, "leave_one_load_out", "mean_accuracy"), "mean of 4 folds"),
-        ("📏", "Calibration error (ECE)", g(ml, "calibration_cross_load", "isotonic", "ece"), "lower is better"),
-        ("🧠", "CNN accuracy @ 5 dB noise", g(cnn, "noise_robustness_cross_load", "aug", "5dB"), "with augmentation"),
-        ("📚", "Key-fact recall (full system)", None if full is None else float(full["key_fact_recall"]),
+        ("", "Cross-load accuracy (RF)", g(ml, "cross_load", "RandomForest", "accuracy"), "train 0-2 HP → test 3 HP"),
+        ("", "Leave-one-load-out", g(ml, "leave_one_load_out", "mean_accuracy"), "mean of 4 folds"),
+        ("", "Calibration error (ECE)", g(ml, "calibration_cross_load", "isotonic", "ece"), "lower is better"),
+        ("", "CNN accuracy @ 5 dB noise", g(cnn, "noise_robustness_cross_load", "aug", "5dB"), "with augmentation"),
+        ("", "Key-fact recall (full system)", None if full is None else float(full["key_fact_recall"]),
          "ML + improved RAG"),
-        ("🛡️", "Wrong ML labels flagged", None if wrong is None or wrong.empty else float(wrong.flagged.mean()),
+        ("", "Wrong ML labels flagged", None if wrong is None or wrong.empty else float(wrong.flagged.mean()),
          "stress test"),
     ]
     cols = st.columns(len(kpis))
@@ -363,6 +363,6 @@ def render() -> None:
         card_title("Physics check alone", "envelope spectrum, per recording")
         pe = g(ml, "physics_envelope_check", default={})
         if pe:
-            st.markdown(theme.card_html("🔬", "Overall accuracy", f"{pe.get('overall_accuracy', 0):.0%}",
+            st.markdown(theme.card_html("", "Overall accuracy", f"{pe.get('overall_accuracy', 0):.0%}",
                                         "no ML involved", color=theme.CYAN), unsafe_allow_html=True)
             table(pd.DataFrame(list(pe.get("per_fault_type", {}).items()), columns=["Fault type", "Accuracy"]))
