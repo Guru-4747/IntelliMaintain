@@ -28,7 +28,7 @@ def torch_available() -> bool:
     try:
         import torch  # noqa: F401
         return True
-    except (ImportError, OSError):
+    except ImportError:
         return False
 
 

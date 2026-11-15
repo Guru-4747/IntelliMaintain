@@ -59,13 +59,31 @@ def tokenize(text: str) -> list[str]:
     return [w for w in _WORD.findall(text.lower()) if w not in _STOP]
 
 
+def _reused_chunks(index_dir: Path, present_sources: set[str]) -> list[Chunk]:
+    """Chunks of downloaded PDFs that are in the current index but not on this computer (PDFs are not in git)."""
+    path = index_dir / "chunks.jsonl"
+    if not path.exists():
+        return []
+    with open(path, encoding="utf-8") as f:
+        old = [Chunk(**json.loads(line)) for line in f if line.strip()]
+    return [c for c in old if c.source.lower().endswith(".pdf") and c.source not in present_sources]
+
+
 def build_index(corpus_dir: Path = config.CORPUS_DIR, index_dir: Path = config.INDEX_DIR,
-                prefer: str = "bge", verbose: bool = True) -> dict:
+                prefer: str = "bge", verbose: bool = True, reuse_missing_pdfs: bool = False) -> dict:
     t0 = time.time()
     pages = load_corpus(corpus_dir)
     if not pages:
         raise FileNotFoundError(f"No .pdf/.md/.txt documents found in {corpus_dir}")
     chunks = chunk_pages(pages)
+    n_pages = len(pages)
+    if reuse_missing_pdfs:
+        reused = _reused_chunks(index_dir, {p.source for p in pages})
+        if verbose and reused:
+            print(f"Reusing {len(reused)} chunks of {len({c.source for c in reused})} PDFs that are indexed but "
+                  "not present in data/corpus on this computer.")
+        chunks += reused
+        n_pages += len({(c.source, c.page) for c in reused})
     texts = [f"{c.title}\n{c.text}" for c in chunks]
     emb = get_embedder(prefer, corpus_texts=texts, verbose=verbose)
     if verbose:
@@ -84,7 +102,7 @@ def build_index(corpus_dir: Path = config.CORPUS_DIR, index_dir: Path = config.I
             f.write(json.dumps(c.__dict__, ensure_ascii=False) + "\n")
     meta = {
         "embedder": emb.kind, "embed_model": emb.model_name, "dim": int(vecs.shape[1]),
-        "n_chunks": len(chunks), "n_pages": len(pages),
+        "n_chunks": len(chunks), "n_pages": n_pages,
         "sources": sorted({c.source for c in chunks}),
         "chunk_tokens": config.CHUNK_TOKENS, "chunk_overlap": config.CHUNK_OVERLAP,
         **calibrate_threshold(emb, index),
@@ -93,7 +111,7 @@ def build_index(corpus_dir: Path = config.CORPUS_DIR, index_dir: Path = config.I
     (index_dir / "meta.json").write_text(json.dumps(meta, indent=2))
     if verbose:
         print(f"Indexed {len(chunks)} chunks from {len(meta['sources'])} documents "
-              f"({len(pages)} pages) with {emb.model_name} -> {index_dir}")
+              f"({n_pages} pages) with {emb.model_name} -> {index_dir}")
     load_retriever.cache_clear()
     return meta
 
@@ -175,7 +193,7 @@ class Retriever:
         for i in cand[:top_k]:
             s = dense_score.get(i)
             if s is None:
-                s = float(self.embedder.embed_query(query) @ self.index.reconstruct(i))
+                s = float(np.ravel(self.embedder.embed_query(query) @ self.index.reconstruct(i))[0])
             out.append(self._to_evidence(i, s, "hybrid"))
         return out
 

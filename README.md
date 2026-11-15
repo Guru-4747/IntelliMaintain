@@ -119,6 +119,54 @@ sentence must cite a source and share enough words with it; (3) every number mus
 (4) unverifiable sentences are removed, and if less than half of the answer can be verified the verified offline
 answer is shown instead. The app shows "✅ verified against the data" and a grounding score for every Gemini answer.
 
+## Chat with the copilot
+
+The Diagnose tab is a chat: type any question and the copilot answers **that** question, like a conversation.
+The signal is classified once (or with **▶ Run diagnosis**); every later question reuses that diagnosis and only
+searches and answers again, so replies are fast. Follow-ups such as "why?", "how often?" or "can I keep running
+it?" use the conversation so far.
+
+The language layer detects what each question is about (`nlu.question_focus`): condition, severity / keep running,
+safety, lubrication, replacement, signal indicators, defect frequencies, CWRU comparison, the model, which part is
+damaged, how the fault happened, or next actions. The search and the reply are aimed at that topic, so asking
+"what grease should I use?" with a faulty bearing loaded gives a lubrication answer, not the whole diagnosis
+again. Gemini receives the conversation and the topic and returns a direct `answer` that is verified sentence by
+sentence; without Gemini (or if its reply fails verification) a question-focused offline reply is built from the
+data and the documents.
+
+## Every answer explains how the fault occurs
+
+Besides *what* the fault is, each diagnosis now explains *how* it develops and *why* it vibrates the way it does
+(section **🔧 How this fault occurs** in the app, `fault_mechanism` in the JSON). The agent runs a second, targeted
+retrieval for the damage mechanism (fatigue spalling, load zone, impacts, resonance, defect frequency) of the
+predicted fault type and the text is cited and verified like the rest of the answer. Sentences about a different
+fault type are kept out. The knowledge base has three new documents for this:
+
+| Document | Content |
+|---|---|
+| `kb11_fault_mechanisms.md` | how bearings carry load, rolling contact fatigue, premature-failure causes, how a defect makes vibration, why outer/inner/ball faults look different, the four degradation stages, seeded vs real faults |
+| `kb12_cwru_dataset_in_intellimaintain.md` | the CWRU rig and classes, the 48 kHz issue, per-class RMS/kurtosis/crest-factor ranges taken from the trained model, model results and limits |
+| `kb13_intellimaintain_faq.md` | what the citations, confidence, anomaly score and physics check mean, file formats, models, "can I keep running it" |
+
+The diagnosis also compares the signal with the **typical CWRU values of the predicted class** (for example
+"kurtosis 7.94, inside the CWRU OR_007 range 7.585 to 7.963"), shown in the prediction panel and given to the LLM.
+
+## Online search (optional, cited and verified)
+
+With **Online search** in the sidebar the agent can call a fourth tool, `web_search`, which fetches passages from
+Wikipedia (free, no key, CC BY-SA). Web passages are numbered after the documents, marked 🌐 with a link, and every
+sentence that cites them is verified exactly like document sentences, so online search adds knowledge without
+allowing unsupported claims.
+
+| Setting | Behaviour |
+|---|---|
+| `auto` (app default) | search online only when the documents are not relevant enough, or the question is outside the maintenance documents |
+| `always` | add web passages to every answer |
+| `off` (default for scripts and evaluation, reproducible) | documents only |
+
+Set the default with `IM_WEB_SEARCH=auto` in `.env`. Without internet the agent adds a warning and answers from the
+documents, so nothing breaks.
+
 ## Ask in your own words
 
 Questions can be typed like a chat message – typos, short forms and everyday words are understood
@@ -307,6 +355,7 @@ intellimaintain/
 | `python scripts/train_ml.py` | Feature extraction + all ML experiments + figures + model |
 | `python scripts/train_cnn.py` | Spectrogram CNN on the same splits + RF-vs-CNN table + figures |
 | `python scripts/build_index.py` | Parse corpus, chunk, embed with BGE, store in FAISS, run the test query |
+| `python scripts/build_index.py --reuse-missing-pdfs` | Same, but keeps the indexed PDF chunks when the PDFs are not on this computer (fresh clone) |
 | `python scripts/diagnose.py data/samples/outer_race_007_3hp.csv` | Command-line diagnosis |
 | `python scripts/diagnose.py --question "What does kurtosis 8 mean?"` | Ask the knowledge base only |
 | `python scripts/run_eval.py --provider gemini` | Full evaluation with Gemini (paced for the free tier) |

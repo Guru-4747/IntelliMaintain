@@ -75,6 +75,22 @@ def similar_cases(X: np.ndarray, bundle: dict, k: int = 3) -> list[dict]:
     return out
 
 
+def class_reference(bundle: dict, label: str) -> dict:
+    """Range of key indicators of `label` over the CWRU training recordings (window averages, all loads)."""
+    prof = bundle.get("case_profiles")
+    feats = list(bundle.get("features") or [])
+    if not prof or label not in set(prof["label"]):
+        return {}
+    v = np.asarray(prof["vectors"]) * prof["sd"] + prof["mu"]
+    rows = v[np.asarray(prof["label"]) == label]
+    out = {"cwru_class": str(label), "n_recordings": int(len(rows))}
+    for name, key in (("rms", "rms_g"), ("kurtosis", "kurtosis"), ("crest_factor", "crest_factor")):
+        if name in feats:
+            col = rows[:, feats.index(name)]
+            out[key] = [round(float(col.min()), 3), round(float(col.max()), 3)]
+    return out
+
+
 def classify_signal(signal: np.ndarray, fs: int | None = config.FS, override_label: str | None = None,
                     model: str = "rf") -> ClassifyResult:
     """Classify a raw vibration signal (any length >= 2048 samples at 12 kHz).
@@ -134,4 +150,5 @@ def classify_signal(signal: np.ndarray, fs: int | None = config.FS, override_lab
         key_features=summary_features(x),
         model_name=model_name,
         similar_cases=similar_cases(X, b),
+        cwru_reference=class_reference(b, label),
     )

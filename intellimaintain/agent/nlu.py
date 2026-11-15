@@ -78,6 +78,47 @@ DOMAIN_RE = re.compile(r"\b(bearing|vibration|motor|pump|fan|compressor|gearbox|
                        r"inspection|replace|failure|fault|defect|spall|noise|temperature|alignment|cwru|iso|"
                        r"lockout|safety|machine|sensor|accelerometer|wear|crack|damage|seal|monitor)", re.I)
 
+# What the question is really about. Checked in order; the first match wins. "diagnosis" = general condition.
+FOCUS_PATTERNS = [
+    ("diagnosis", r"\b(condition|what'?s wrong|what is wrong|wrong with|status|health\w*|diagnos\w*|"
+                  r"is (it|my|this|the)( \w+)? (ok|okay|fine|good|bad|normal|damaged|faulty))\b"),
+    ("severity", r"\b(keep (it )?running|run (it )?(till|until|for|to)|how long|how much time|remaining|last|"
+                 r"urgent\w*|serious|critical|how bad|dangerous|stop (the|it|this)|shut ?down|can (i|we) (still )?"
+                 r"(run|use|operate)|safe to (run|use|operate)|till|until|friday|tomorrow|next week|next month|"
+                 r"when (should|must|do) (i|we) (replace|change|stop))\b"),
+    ("safety", r"\b(safety|safe(ly)?|lock ?out|tag ?out|isolat\w*|ppe|danger|hazard|before (i|we) (open|work|"
+               r"replace|remove|change))\b"),
+    ("lubrication", r"\b(grease|greasing|oil|oiling|lubric\w*|lube|relubric\w*|viscosity)\b"),
+    ("replacement", r"\b(replac\w*|change (the|it|this)|swap|mount\w*|dismount\w*|install\w*|remove|removal|"
+                    r"puller|heater|fit a new)\b"),
+    ("indicators", r"\b(kurtosis|crest factor|crest|rms|peak value|skewness|indicator\w*|statistic\w*|"
+                   r"anomaly score|anomaly)\b"),
+    ("frequencies", r"\b(bpfo|bpfi|bsf|ftf|defect frequenc\w*|fault frequenc\w*|characteristic frequenc\w*|"
+                    r"envelope|spectrum|harmonic\w*|sideband\w*|rpm|shaft speed|physics)\b"),
+    ("cwru", r"\b(cwru|case western|dataset|data set|similar (case|recording)\w*|compar\w* (with|to)|"
+             r"training data)\b"),
+    ("model", r"\b(why (did|does|is) (the |this |your )?(model|classifier|ai|system|it) (predict|say|think|"
+              r"classif)\w*|confidence|probabilit\w*|how (sure|confident|accurate)|accuracy|trust|"
+              r"random ?forest|cnn|classifier|model)\b"),
+    ("location", r"\b(which (part|component|ring|race|element)|where (is|are) (the )?(damage|fault|defect|"
+                 r"problem)|what (part|component) (is|are) (damaged|faulty|broken)|inner or outer|damaged part)\b"),
+    ("mechanism", r"\b(occur\w*|happen\w*|develop\w*|caus\w*|mechanism|reason|origin|"
+                  r"why (do|does|did) \w+( \w+)? (fail|break|wear))\b"),
+    ("actions", r"\b(what (should|shall|do|can|must) (i|we) do|next steps?|recommend\w*|actions?|fix|repair|"
+                r"what now|maintenance (action|plan|task))\b"),
+]
+FOCUS_RE = [(name, re.compile(pat, re.I)) for name, pat in FOCUS_PATTERNS]
+
+
+def question_focus(text: str) -> str:
+    """The specific thing the user asks about; 'diagnosis' when it is a general condition question."""
+    t = (text or "").lower()
+    for name, rx in FOCUS_RE:
+        if rx.search(t):
+            return name
+    return "diagnosis"
+
+
 STOP = set("""a an the and or of to in on for with by is are was were be been at as it its this that these those from
 into than then so such can may should must not no do does did how what which who when where why i you we my our your
 me us please hi hey ok yes""".split())
@@ -91,6 +132,7 @@ class Query:
     intent: str                       # greeting | thanks | help | diagnosis | knowledge | out_of_scope
     corrections: dict[str, str] = field(default_factory=dict)
     added_terms: list[str] = field(default_factory=list)
+    focus: str = "diagnosis"          # what the question asks about (see FOCUS_PATTERNS)
 
     @property
     def needs_tools(self) -> bool:
@@ -172,7 +214,9 @@ def understand(text: str, has_signal: bool = False) -> Query:
         intent = "out_of_scope"
     content = [w for w in re.findall(r"[a-z0-9]+", cleaned) if w not in STOP]
     search_query = " ".join(content + added) or cleaned
-    return Query(original, cleaned, search_query, intent, corrections, added)
+    # focus is read from the original words too: spelling correction can turn "till" into "still"
+    focus = question_focus(original.lower() + " . " + cleaned)
+    return Query(original, cleaned, search_query, intent, corrections, added, focus)
 
 
 GREETING_REPLY = ("Hi! I'm IntelliMaintain, your bearing maintenance copilot. Upload a vibration file (or pick a demo "

@@ -58,11 +58,11 @@ abstain,True,TC07,Outer race,Normal,1.0,Unknown,0.0,0.0,conflict,1.0,1.0,1.0,0.8
 trust_ml,False,TC08,Ball,,0.0,Ball,1.0,0.0,inconclusive,1.0,0.0,1.0,1.0
 trust_ml,True,TC08,Ball,Inner race,0.0,Inner race,0.0,1.0,consistent,0.0,0.0,1.0,1.0
 trust_ml,True,TC08,Ball,Outer race,0.0,Outer race,0.0,1.0,inconclusive,1.0,0.0,1.0,1.0
-trust_ml,True,TC08,Ball,Normal,0.0,Normal,0.0,1.0,consistent,0.0,0.0,1.0,0.8333333333333334
+trust_ml,True,TC08,Ball,Normal,0.0,Normal,0.0,1.0,consistent,0.0,0.0,1.0,0.8571428571428571
 abstain,False,TC08,Ball,,0.0,Ball,1.0,0.0,inconclusive,1.0,0.0,1.0,1.0
 abstain,True,TC08,Ball,Inner race,0.0,Inner race,0.0,1.0,consistent,0.0,0.0,1.0,1.0
 abstain,True,TC08,Ball,Outer race,0.0,Outer race,0.0,1.0,inconclusive,1.0,0.0,1.0,1.0
-abstain,True,TC08,Ball,Normal,0.0,Normal,0.0,1.0,consistent,0.0,0.0,1.0,0.8333333333333334
+abstain,True,TC08,Ball,Normal,0.0,Normal,0.0,1.0,consistent,0.0,0.0,1.0,0.8571428571428571
 trust_ml,False,TC09,Ball,,0.0,Ball,1.0,0.0,inconclusive,1.0,0.0,1.0,1.0
 trust_ml,True,TC09,Ball,Inner race,0.0,Inner race,0.0,1.0,conflict,1.0,1.0,1.0,1.0
 trust_ml,True,TC09,Ball,Outer race,0.0,Outer race,0.0,1.0,conflict,1.0,1.0,1.0,1.0

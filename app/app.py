@@ -173,12 +173,16 @@ def report_markdown(d: Diagnosis) -> str:
         ff = d.fault_frequencies
         lines += [f"- Physics: BPFO {ff.bpfo_hz:.1f} Hz, BPFI {ff.bpfi_hz:.1f} Hz, BSF {ff.bsf_hz:.1f} Hz — "
                   f"{ff.consistency}: {ff.consistency_note}"]
-    lines += ["", "## Explanation", "", d.explanation, "", "## Recommended actions", ""]
+    lines += ["", "## Explanation", "", d.explanation]
+    if d.fault_mechanism:
+        lines += ["", "## How this fault occurs", "", d.fault_mechanism]
+    lines += ["", "## Recommended actions", ""]
     lines += [f"{i}. {a}" for i, a in enumerate(d.recommended_actions, 1)] or ["(none)"]
     if d.warnings:
         lines += ["", "## Warnings", ""] + [f"- {w}" for w in d.warnings]
     lines += ["", "## Evidence", ""]
-    lines += [f"[{i}] {e.source}, page {e.page}" for i, e in enumerate(d.evidence, 1)]
+    lines += [f"[{i}] {e.source}, {e.url}" if e.url else f"[{i}] {e.source}, page {e.page}"
+              for i, e in enumerate(d.evidence, 1)]
     return "\n".join(lines)
 
 
@@ -220,7 +224,15 @@ retrieval = st.sidebar.selectbox("Retrieval", ["improved", "basic", "none"],
                                  help="improved = BGE dense + BM25 + rank fusion (+ reranker); basic = dense only")
 planner = st.sidebar.selectbox("Planner", ["fixed", "llm"],
                                help="fixed = deterministic tool order; llm = the LLM chooses tools (bounded)")
-max_steps = st.sidebar.slider("Max tool calls", 1, 6, config.MAX_AGENT_STEPS)
+max_steps = st.sidebar.slider("Max tool calls", 1, 8, config.MAX_AGENT_STEPS)
+WEB_LABELS = {"auto": "auto — when the documents are not enough", "always": "always — add web sources",
+              "off": "off — documents only"}
+web_mode = st.sidebar.selectbox("Online search", list(WEB_LABELS), format_func=WEB_LABELS.get,
+                                index=list(WEB_LABELS).index(os.getenv("IM_WEB_SEARCH", "auto").lower()
+                                                             if os.getenv("IM_WEB_SEARCH", "auto").lower()
+                                                             in WEB_LABELS else "auto"),
+                                help="Searches Wikipedia for extra evidence. Web passages are cited and verified "
+                                     "like the manuals; without internet the app simply uses the documents.")
 CLASSIFIERS = {"RandomForest (features)": "rf", "Spectrogram CNN (image)": "cnn"}
 classifier_options = list(CLASSIFIERS) if cnn_ready() else list(CLASSIFIERS)[:1]
 classifier_label = st.sidebar.selectbox("Classifier", classifier_options,
@@ -264,44 +276,93 @@ with tab_diag:
         rpm_in = st.number_input("Shaft speed [rpm]", min_value=100.0, max_value=20000.0,
                                  value=float(rpm_meta or 1772.0), step=1.0, disabled=source.startswith("No"))
 
-    question = st.text_area("Question for the copilot",
-                            value="What is the condition of this bearing, why, and what maintenance action is "
-                                  "recommended?", height=80)
-
     if x is not None:
         with st.expander("Signal preview", expanded=False):
             st.plotly_chart(plot_time(x, int(fs_in)), theme=None)
 
-    if st.button("▶ Run diagnosis", type="primary", disabled=not (status["model"] and status["index"])):
+    # ---------------- chat with the copilot
+    # The signal is classified once; every chat turn reuses that diagnosis and only searches and answers again.
+    sig_key = None
+    if x is not None:
+        xa = np.asarray(x, dtype=np.float64)
+        sig_key = (len(xa), float(np.round(xa[:4096].sum(), 6)), int(fs_in), float(rpm_in), classifier, use_ml)
+    if st.session_state.get("chat_key") != sig_key:  # new signal (or none): start a new conversation
+        st.session_state["chat_key"] = sig_key
+        st.session_state["chat"] = []
+        st.session_state.pop("diag", None)
+        st.session_state.pop("diag_cache", None)
+    chat: list[dict] = st.session_state.setdefault("chat", [])
+
+    st.subheader("💬 Chat with the copilot")
+    st.caption("Ask anything in your own words — about this bearing, its data, the CWRU dataset, the models or "
+               "maintenance. Follow-up questions like “why?” or “can I keep running it?” work too."
+               + (" A signal is loaded, so answers use its diagnosis." if x is not None else
+                  " No signal loaded: answers come from the documents" + (" and online search." if web_mode != "off"
+                                                                         else ".")))
+    ready = status["model"] and status["index"]
+    b1, b2, _ = st.columns([1.3, 1, 4])
+    run_full = b1.button("▶ Run diagnosis", type="primary", disabled=not ready or x is None,
+                         help="Full diagnosis of the loaded signal (you can also just type a question below)")
+    if b2.button("🧹 New chat", disabled=not chat):
+        st.session_state["chat"] = []
+        st.session_state.pop("diag", None)
+        st.rerun()
+
+    for msg in chat:
+        with st.chat_message(msg["role"], avatar="🧑‍🔧" if msg["role"] == "user" else "⚙️"):
+            st.markdown(msg["content"])
+            if msg.get("note"):
+                st.caption(msg["note"])
+
+    prompt = st.chat_input("Ask the copilot… e.g. “what is wrong with this bearing?”, “what grease should I use?”",
+                           disabled=not ready)
+    if run_full:
+        prompt = "What is the condition of this bearing, why, and what maintenance action is recommended?"
+    if prompt:
         if x is not None and len(x) < config.WINDOW * max(1, int(fs_in) // config.FS):
             st.error(f"Signal too short: need at least {config.WINDOW} samples at 12 kHz.")
         else:
-            with st.spinner("Agent running: classify → fault frequencies → retrieve → explain ..."):
+            history = [{"role": m["role"], "content": m["content"]} for m in chat]
+            chat.append({"role": "user", "content": prompt})
+            with st.spinner("Thinking: diagnosis → documents → (web) → answer ..."):
                 try:
                     llm = LLM(provider, model, max_retries=2)  # keep the UI responsive
                     if provider == "gemini" and st.session_state.get("llm_runs", 0) >= MAX_LLM_RUNS:
                         llm = LLM("offline")  # protect the owner's free quota from heavy use of a public link
-                        st.info(f"Gemini limit of {MAX_LLM_RUNS} diagnoses per session reached - "
+                        st.info(f"Gemini limit of {MAX_LLM_RUNS} answers per session reached - "
                                 "using the offline generator.")
                     elif provider == "gemini":
                         st.session_state["llm_runs"] = st.session_state.get("llm_runs", 0) + 1
                     agent = DiagnosisAgent(llm=llm, use_ml=use_ml, retrieval=retrieval, planner=planner,
-                                           max_steps=max_steps, classifier=classifier)
-                    d = agent.run(question, signal=x, fs=int(fs_in) if x is not None else None,
-                                  rpm=float(rpm_in) if x is not None else None)
-                    st.session_state["diag"] = d
-                    st.session_state["diag_signal"] = (x, int(fs_in), float(rpm_in)) if x is not None else None
-                    st.session_state.pop("review_saved", None)
+                                           max_steps=max_steps, classifier=classifier, web=web_mode)
+                    cache = st.session_state.get("diag_cache") or {}
+                    d = agent.run(prompt, signal=x, fs=int(fs_in) if x is not None else None,
+                                  rpm=float(rpm_in) if x is not None else None, history=history,
+                                  ml=cache.get("ml"), ff=cache.get("ff"))
+                    if x is not None and d.ml_result is not None:
+                        st.session_state["diag_cache"] = {"ml": d.ml_result, "ff": d.fault_frequencies}
+                    note = f"{'✅ Gemini, verified' if d.answer_source.endswith('(verified)') else d.answer_source}"
+                    if any(e.url for e in d.evidence):
+                        note += " · 🌐 includes online sources"
+                    if d.warnings:
+                        note += f" · {len(d.warnings)} note(s) below"
+                    reply = d.answer or d.summary
+                    if d.fault_mechanism and d.fault_type != "Normal" and d.question_focus in ("diagnosis",
+                                                                                               "mechanism"):
+                        reply += "\n\n**🔧 How this fault occurs:** " + d.fault_mechanism
+                    chat.append({"role": "assistant", "content": reply, "note": note})
+                    if d.answer_source != "assistant":
+                        st.session_state["diag"] = d
+                        st.session_state["diag_signal"] = (x, int(fs_in), float(rpm_in)) if x is not None else None
+                        st.session_state.pop("review_saved", None)
                 except Exception as e:  # noqa: BLE001 - show a short, key-free message (no traceback)
-                    st.error(redact(f"Diagnosis failed: {type(e).__name__}: {e}"))
+                    chat.append({"role": "assistant", "content": redact(f"Sorry, that failed: {type(e).__name__}: {e}")})
+            st.rerun()
 
     d: Diagnosis | None = st.session_state.get("diag")
-    if d is not None and d.answer_source == "assistant":  # greeting / thanks / help: just reply
-        st.divider()
-        st.markdown(theme.card_html("💬", "IntelliMaintain", "", d.summary, color=theme.TEXT), unsafe_allow_html=True)
-        d = None
     if d is not None:
         st.divider()
+        st.caption(f"Details of the latest answer — question: “{d.question}”")
         # ---------------- prediction panel
         st.subheader("1 · Prediction")
         m1, m2, m3, m4 = st.columns(4)
@@ -346,6 +407,18 @@ with tab_diag:
                 pc2.markdown("**Most similar recordings in the CWRU dataset**")
                 pc2.dataframe(pd.DataFrame(d.ml_result.similar_cases)[
                     ["cwru_file", "label", "load_hp", "similarity"]], hide_index=True)
+            ref = d.ml_result.cwru_reference
+            if ref:
+                rows = []
+                for key, name in (("rms_g", "RMS [g]"), ("kurtosis", "Kurtosis"), ("crest_factor", "Crest factor")):
+                    if key in ref and key in d.ml_result.key_features:
+                        lo, hi = ref[key]
+                        own = d.ml_result.key_features[key]
+                        rows.append({"indicator": name, "this signal": own, f"CWRU {ref['cwru_class']}": f"{lo} – {hi}",
+                                     "": "✅ inside" if lo <= own <= hi else "⬆ above" if own > hi else "⬇ below"})
+                if rows:
+                    pc2.markdown(f"**Compared with CWRU class {ref['cwru_class']}** ({ref['n_recordings']} recordings)")
+                    pc2.dataframe(pd.DataFrame(rows), hide_index=True)
             if d.fault_frequencies:
                 ff = d.fault_frequencies
                 pc2.markdown(f"**Defect frequencies @ {ff.rpm:.0f} rpm**  \nBPFO {ff.bpfo_hz:.1f} Hz · "
@@ -362,7 +435,7 @@ with tab_diag:
             st.plotly_chart(plot_spectrogram(sx12, config.FS), theme=None)
 
         # ---------------- explanation panel
-        st.subheader("2 · Explanation (cited)")
+        st.subheader("2 · Full explanation (cited)")
         from intellimaintain.agent.nlu import understand
 
         nq = understand(d.question, has_signal=d.ml_result is not None)
@@ -384,19 +457,27 @@ with tab_diag:
         for w in d.warnings:
             st.warning(w)
         st.markdown(d.explanation or "_No explanation generated._")
+        if d.fault_mechanism and d.fault_type != "Normal":
+            st.markdown("**🔧 How this fault occurs**")
+            st.markdown(d.fault_mechanism)
         if d.recommended_actions:
             st.markdown("**Recommended actions**")
             st.markdown("\n".join(f"{i}. {a}" for i, a in enumerate(d.recommended_actions, 1)))
         st.caption(f"Answer source: {d.answer_source} · grounding {d.grounding_score:.0%} · "
                    f"Citation coverage {d.citation_coverage:.0%} · configuration {d.config_name} · "
-                   f"LLM {d.llm_provider}:{d.llm_model} · [ML] = classifier, [PHYS] = physics check, "
-                   f"[n] = evidence passage n")
+                   f"LLM {d.llm_provider}:{d.llm_model} · online search {d.web_search} · [ML] = classifier, "
+                   f"[PHYS] = physics check, [n] = evidence passage n (🌐 = online source)")
 
         # ---------------- evidence panel
         st.subheader("3 · Evidence")
         if not d.evidence:
             st.caption("No documents retrieved (retrieval disabled or nothing relevant).")
         for i, e in enumerate(d.evidence, 1):
+            if e.url:
+                with st.expander(f"🌐 [{i}] {e.source} — online (score {e.score:.2f}, web)"):
+                    st.markdown(f"[Open source]({e.url}) · Wikipedia text, CC BY-SA licence")
+                    st.text(e.text)
+                continue
             with st.expander(f"[{i}] {e.title or e.source} — {e.source}, page/section {e.page} "
                              f"(score {e.score:.3f}, {e.retriever})"):
                 st.text(e.text)
@@ -449,8 +530,9 @@ with tab_about:
    *contradict* the ML model.
 3. **RAG layer** – {meta.get('n_chunks', '?')} chunks from {len(meta.get('sources', []))} documents, embedder
    `{meta.get('embed_model', '?')}`, FAISS + BM25 with reciprocal-rank fusion and optional cross-encoder reranking.
-4. **Agent + LLM** – max {config.MAX_AGENT_STEPS} calls to 3 approved tools; grounded prompt, mandatory citations,
-   automatic citation verification, "insufficient evidence" fallback, human review.
+4. **Agent + LLM** – max {config.MAX_AGENT_STEPS} calls to 4 approved tools (classifier, physics check, document
+   retrieval, optional online search); grounded prompt, mandatory citations, automatic citation verification,
+   a cited "how this fault occurs" explanation, "insufficient evidence" fallback, human review.
 
 Output is **advisory** and must be reviewed by a qualified engineer.
 """)

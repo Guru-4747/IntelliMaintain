@@ -3,6 +3,7 @@ import json
 import pytest
 
 from conftest import needs_index, needs_model, synthetic_bearing_signal
+from intellimaintain import config
 from intellimaintain.agent.agent import DiagnosisAgent, ml_informed_query
 from intellimaintain.agent.llm import LLM, LLMError, parse_json
 from intellimaintain.agent.verify import citation_coverage, clean_invalid_citations, split_sentences
@@ -62,7 +63,7 @@ def test_agent_all_configs_produce_valid_diagnosis(use_ml, retrieval, demo_signa
         "What is wrong with this bearing?", signal=demo_signal, rpm=1797)
     assert isinstance(d, Diagnosis)
     assert d.fault_type in {"Normal", "Inner race", "Outer race", "Ball", "Unknown"}
-    assert len(d.tool_trace) <= 5
+    assert len(d.tool_trace) <= config.MAX_AGENT_STEPS
     assert (d.ml_result is not None) == use_ml
     assert (len(d.evidence) > 0) == (retrieval != "none")
     Diagnosis.model_validate_json(d.model_dump_json())  # serialisable

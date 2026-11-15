@@ -1,4 +1,4 @@
-"""The three approved agent tools. The agent can call nothing else (bounded autonomy)."""
+"""The four approved agent tools. The agent can call nothing else (bounded autonomy)."""
 from __future__ import annotations
 
 import numpy as np
@@ -7,6 +7,7 @@ from .. import config
 from ..ml.classifier import classify_signal as _classify
 from ..ml.physics import cross_check, defect_frequencies, physics_check
 from ..rag.retriever import retrieve_evidence as _retrieve
+from ..rag.web import web_search as _web_search
 from ..schemas import ClassifyResult, EvidenceChunk, FaultFrequencies
 
 
@@ -34,4 +35,9 @@ def retrieve_evidence(query: str, top_k: int = config.TOP_K, mode: str = "improv
     return _retrieve(query, top_k=top_k, mode=mode)
 
 
-TOOL_NAMES = ("classify_signal", "fault_frequency_calc", "retrieve_evidence")
+def web_search(query: str, top_k: int = config.WEB_TOP_K) -> list[EvidenceChunk]:
+    """Tool 4 - online evidence: Wikipedia passages, cited and verified like the documents (optional)."""
+    return _web_search(query, top_k=top_k)
+
+
+TOOL_NAMES = ("classify_signal", "fault_frequency_calc", "retrieve_evidence", "web_search")

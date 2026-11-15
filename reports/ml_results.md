@@ -7,7 +7,7 @@ Windows: 4643 from 40 recordings, window=2048 samples, overlap=50 %
 | Random 80/20 | RandomForest | 1.0000 | 1.0000 | - |
 | Random 80/20 | XGBoost | 0.9989 | 0.9989 | - |
 | Cross-load 0-2 -> 3 HP | RandomForest | 1.0000 | 1.0000 | 1.0000 |
-| Cross-load 0-2 -> 3 HP | XGBoost | 0.9813 | 0.9813 | 0.9949 |
+| Cross-load 0-2 -> 3 HP | XGBoost | 0.9813 | 0.9813 | 0.9932 |
 
 ## Leave-one-load-out (RandomForest)
 
@@ -24,7 +24,7 @@ Windows: 4643 from 40 recordings, window=2048 samples, overlap=50 %
 | Probabilities | ECE (lower is better) | Brier |
 |---|---|---|
 | raw | 0.1203 | 0.0373 |
-| isotonic | 0.0163 | 0.0025 |
+| isotonic | 0.0164 | 0.0025 |
 
 ## Cross-severity generalisation (harder test)
 

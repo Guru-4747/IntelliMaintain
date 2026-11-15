@@ -39,7 +39,7 @@ def guess_fault_from_text(text: str) -> str:
     return hits[0] if len(hits) == 1 else "Unknown"
 
 
-def _sentences(text: str) -> list[str]:
+def _sentences(text: str, max_len: int = 400) -> list[str]:
     """Prose sentences of a chunk; headings (no final punctuation) and list items are skipped."""
     out = []
     for line in text.split("\n"):
@@ -48,7 +48,7 @@ def _sentences(text: str) -> list[str]:
             continue
         for s in re.split(r"(?<=[^0-9][.!?])\s+", line):
             s = s.strip()
-            if 25 < len(s) < 400:
+            if 25 < len(s) < max_len:
                 if s.startswith("WO-"):
                     s = "Similar past work order " + s.replace(" | ", ", ")
                 out.append(s)
@@ -99,9 +99,10 @@ def generate(question: str, ml: ClassifyResult | None, ff: FaultFrequencies | No
         fault_terms = set(tokenize(fault)) if fault not in ("Unknown",) else set()
         scored = []
         for n, ev in enumerate(evidence, 1):
+            title_hit = min(len(set(tokenize(ev.title)) & q_terms), 2)  # passages from a document about the topic
             for s in _sentences(ev.text):
                 st = set(tokenize(s))
-                score = len(st & q_terms) + 2 * len(st & fault_terms)
+                score = len(st & q_terms) + 2 * len(st & fault_terms) + (title_hit if len(st & q_terms) else 0)
                 if not re.match(r"^\d\.", s) and not s.lower().startswith(("type:", "title:")):
                     scored.append((score, n, s))
         scored.sort(key=lambda t: (-t[0], t[1]))
@@ -159,3 +160,243 @@ def generate(question: str, ml: ClassifyResult | None, ff: FaultFrequencies | No
                    "kurtosis against this measurement as a baseline [ML]."]
     return {"fault_type": fault, "summary": summary, "explanation": " ".join(expl),
             "recommended_actions": actions, "insufficient_evidence": insufficient}
+
+
+MECHANISM_TERMS = {
+    "Outer race": ("outer", "stationary", "load zone", "bpfo", "equal", "constant", "same position", "spall"),
+    "Inner race": ("inner", "rotates", "revolution", "modulat", "sideband", "bpfi", "load zone", "spall"),
+    "Ball": ("ball", "rolling element", "spin", "bsf", "cage", "ftf", "irregular", "both races", "alternately"),
+    "Normal": ("healthy", "gaussian", "no repeating", "stage 1", "stage 2", "first", "fatigue", "spall",
+               "trend", "quiet"),
+    "Unknown": ("fatigue", "spall", "crack", "impact", "resonance", "defect frequency", "envelope", "load zone"),
+}
+# words that mark a sentence as being about ANOTHER fault type (kept out of this fault's mechanism)
+MECHANISM_EXCLUDE = {
+    "Outer race": ("inner ring", "inner race", "bpfi", "ball spin", "bsf", "cage", "rotates with the shaft",
+                   "ball defect", "rolling element defect"),
+    "Inner race": ("outer ring", "outer race", "bpfo", "ball spin", "bsf", "cage", "ftf", "stationary",
+                   "ball defect", "rolling element defect"),
+    "Ball": ("bpfi", "bpfo", "inner ring rotates", "outer ring is", "inner race defect", "outer race defect",
+             "inner race damage", "outer race damage"),
+    "Normal": ("bpfi", "bpfo", "bsf", "cage", "inner ring", "outer ring", "sideband"),
+    "Unknown": (),
+}
+_NOT_MECHANISM = ("classifier", "predict", "analyst", "should be", "recommend", "dataset", "model", "monitoring "
+                  "interval", "replace", "work order", "schedule")
+_GENERAL_MECH = ("spall", "fatigue", "crack", "strike", "impact", "resonance", "repeat", "load zone", "envelope",
+                 "subsurface", "contact stress")
+
+
+def mechanism(fault: str, evidence: list[EvidenceChunk], max_sentences: int = 5) -> str:
+    """How the fault develops and why it vibrates the way it does: the best mechanism sentences of the evidence,
+    each cited. Prefers the fault-mechanism guide and passages written about this fault type; sentences about
+    other fault types, about the models or about actions are left out (those belong to other answer parts)."""
+    terms = MECHANISM_TERMS.get(fault, MECHANISM_TERMS["Unknown"])
+    exclude = MECHANISM_EXCLUDE.get(fault, ())
+    scored = []
+    for n, ev in enumerate(evidence, 1):
+        is_mech_doc = "how bearing faults occur" in ev.title.lower() or "mechanism" in ev.title.lower()
+        for pos, s in enumerate(_sentences(ev.text)):
+            low = s.lower()
+            if low.startswith(("similar past work order", "type:", "title:")) or "|" in s:
+                continue
+            if any(x in low for x in exclude) or any(x in low for x in _NOT_MECHANISM):
+                continue
+            hits = sum(t in low for t in terms)
+            general = sum(t in low for t in _GENERAL_MECH)
+            if hits == 0 and general < 2:
+                continue
+            score = 3 * hits + general + (3 if is_mech_doc else 0)
+            scored.append((score, n, pos, s))
+    if not scored:
+        return ""
+    scored.sort(key=lambda t: (-t[0], t[1], t[2]))
+    picked = sorted(scored[:max_sentences], key=lambda t: (t[1], t[2]))  # keep the reading order of the sources
+    seen, out = set(), []
+    for _, n, _, s in picked:
+        if s not in seen:
+            out.append(f"{_semi(s)} [{n}].")
+            seen.add(s)
+    return " ".join(out)
+
+
+# ====================================================================== question-focused chat answers
+FOCUS_TERMS = {
+    "severity": ("severity", "remaining life", "stop", "early stage", "quickly", "progress", "trend", "replace",
+                 "planned", "urgent", "short", "rises", "increasing"),
+    "safety": ("lockout", "tagout", "isolate", "safety", "energy", "ppe", "permit", "before"),
+    "lubrication": ("lubric", "grease", "oil", "relubric", "interval", "viscosity", "film"),
+    "replacement": ("mount", "dismount", "puller", "heater", "press", "replace", "install", "fit"),
+    "indicators": ("kurtosis", "crest", "rms", "gaussian", "impact", "peak", "healthy", "3"),
+    "frequencies": ("bpfo", "bpfi", "bsf", "ftf", "envelope", "harmonic", "sideband", "frequency"),
+    "cwru": ("cwru", "dataset", "recording", "seeded", "load", "class"),
+    "model": ("classifier", "confidence", "calibrat", "randomforest", "cnn", "probability", "accuracy"),
+    "mechanism": ("fatigue", "spall", "crack", "impact", "load zone", "strike", "cause", "lubrication",
+                  "contamination", "misalignment", "overload", "mounting", "fit"),
+    "actions": ("inspect", "check", "monitor", "replace", "schedule", "verify", "trend", "confirm"),
+    "location": ("outer race", "inner race", "rolling element", "ball", "ring"),
+    "diagnosis": (),
+}
+_PART = {"Outer race": "the outer race (the stationary outer ring)",
+         "Inner race": "the inner race (the ring that turns with the shaft)",
+         "Ball": "a rolling element (one of the balls)"}
+
+
+DEFINITION_RE = re.compile(r"^(what is|what are|define|meaning of|what does) (?:a |an |the )?([a-z0-9 -]{3,40}?)"
+                           r"(?: mean)?\s*\??(?:\s.*)?$")
+
+
+def best_sentences(question: str, evidence: list[EvidenceChunk], focus: str = "diagnosis", k: int = 3,
+                   fault: str = "Unknown", min_score: int = 2) -> list[str]:
+    """The k evidence sentences that answer the question best, each with its citation."""
+    q_terms = set(tokenize(question))
+    f_terms = FOCUS_TERMS.get(focus, ())
+    m = DEFINITION_RE.match(question.strip().lower())
+    definition = m.group(2).strip() if m else ""
+    exclude = MECHANISM_EXCLUDE.get(fault, ()) if fault in MECHANISM_EXCLUDE else ()
+    scored = []
+    for n, ev in enumerate(evidence, 1):
+        title_terms = set(tokenize(ev.title))
+        for pos, s in enumerate(_sentences(ev.text, max_len=700)):
+            low = s.lower()
+            if "|" in s or low.startswith(("type:", "title:", "similar past work order")):
+                continue
+            if fault != "Unknown" and any(x in low for x in exclude):
+                continue
+            st = set(tokenize(s))
+            score = len(st & q_terms) + sum(t in low for t in f_terms) + min(len(title_terms & q_terms), 2)
+            if fault not in ("Unknown", "Normal") and fault.lower() in low:
+                score += 1
+            if definition and (low.startswith((f"a {definition} is", f"an {definition} is", f"{definition} is",
+                                               f"the {definition} is")) or f"{definition}, also called" in low):
+                score += 6
+            if score >= min_score:
+                scored.append((score, n, pos, s))
+    scored.sort(key=lambda t: (-t[0], t[1], t[2]))
+    out, seen = [], set()
+    for _, n, _, s in scored:
+        if s not in seen:
+            out.append(f"{_semi(s)} [{n}].")
+            seen.add(s)
+        if len(out) >= k:
+            break
+    return out
+
+
+def _ml_sentence(ml: ClassifyResult) -> str:
+    if ml.fault_type == "Normal":
+        return (f"The bearing looks healthy: the classifier predicts Normal with calibrated confidence "
+                f"{ml.confidence:.2f} [ML].")
+    size = f", defect size about {ml.fault_size_in} in" if ml.fault_size_in else ""
+    art = "an" if ml.fault_type[0] in "AEIOU" else "a"
+    sent = (f"The classifier finds {art} {ml.fault_type.lower()} fault ({ml.label}{size}) with calibrated "
+            f"confidence {ml.confidence:.2f} [ML].")
+    if ml.low_confidence:
+        sent += " That confidence is low, so an analyst should verify it [ML]."
+    return sent
+
+
+def _phys_sentence(ff: FaultFrequencies | None) -> str:
+    if ff is None or not ff.envelope_match:
+        return ""
+    if ff.consistency == "consistent":
+        return f"The physics check agrees: the envelope spectrum points to {ff.physics_suggests} [PHYS]."
+    if ff.consistency == "conflict":
+        return (f"The physics check disagrees: the envelope spectrum points to {ff.physics_suggests or 'no clear '
+                f'defect frequency'}, so an analyst should verify the result [PHYS].")
+    return "The envelope spectrum shows no clear defect frequency, so the physics check is inconclusive [PHYS]."
+
+
+def focused_answer(question: str, focus: str, ml: ClassifyResult | None, ff: FaultFrequencies | None,
+                   evidence: list[EvidenceChunk], rel_ok: bool = True) -> str:
+    """A direct, conversational reply to the question that was asked (no LLM), built only from the tool
+    outputs and evidence sentences, each cited."""
+    ev = evidence if rel_ok else []
+    fault = ml.fault_type if ml else guess_fault_from_text(question)
+    # keep sentences about a different fault type out of the reply (not for general-topic questions)
+    ff_fault = fault if focus not in ("cwru", "lubrication", "safety", "replacement") else "Unknown"
+    parts: list[str] = []
+    if focus == "indicators" and ml:
+        kf = ml.key_features
+        parts.append(f"For this signal the RMS is {kf.get('rms_g', 0)} g, the kurtosis is {kf.get('kurtosis', 0)} "
+                     f"and the crest factor is {kf.get('crest_factor', 0)} [ML].")
+        ref = ml.cwru_reference or {}
+        if "kurtosis" in ref:
+            lo, hi = ref["kurtosis"]
+            k = kf.get("kurtosis", 0)
+            where = "inside" if lo <= k <= hi else "above" if k > hi else "below"
+            parts.append(f"In the CWRU data, class {ref['cwru_class']} has a kurtosis of {lo} to {hi}, so this "
+                         f"signal is {where} that range [ML].")
+        if "anomal" in question.lower():
+            parts.append(f"The anomaly score is {ml.anomaly_score:.2f}, on a scale from 0 (looks like the training "
+                         f"data) to 1 (unusual) [ML].")
+        parts += best_sentences(question + " kurtosis healthy impacts", ev, focus, 2, ff_fault)
+    elif focus == "frequencies" and ff:
+        parts.append(f"At {ff.rpm:.0f} rpm the shaft turns at {ff.shaft_hz:.2f} Hz, which gives BPFO "
+                     f"{ff.bpfo_hz:.1f} Hz, BPFI {ff.bpfi_hz:.1f} Hz, BSF {ff.bsf_hz:.1f} Hz and FTF "
+                     f"{ff.ftf_hz:.1f} Hz [PHYS].")
+        if ff.envelope_match:
+            top = max(ff.envelope_match.items(), key=lambda kv: kv[1])
+            parts.append(f"In the envelope spectrum the strongest line is {top[0]} with a signal-to-noise ratio of "
+                         f"{top[1]:.1f}, where above 5 means the frequency is present [PHYS].")
+            if p := _phys_sentence(ff):
+                parts.append(p)
+        parts += best_sentences(question, ev, focus, 1, ff_fault)
+    elif focus == "cwru" and ml:
+        if ml.similar_cases:
+            c = ml.similar_cases[0]
+            same = sum(x["fault_type"] == ml.fault_type for x in ml.similar_cases)
+            parts.append(f"The closest CWRU recording is {c['cwru_file']} ({c['label']}, {c['load_hp']} HP) with "
+                         f"similarity {c['similarity']}, and {same} of the {len(ml.similar_cases)} closest recordings "
+                         f"have the same fault type as the prediction [ML].")
+        ref = ml.cwru_reference or {}
+        if "rms_g" in ref and "kurtosis" in ref:
+            parts.append(f"Typical CWRU {ref['cwru_class']} recordings have RMS {ref['rms_g'][0]} to "
+                         f"{ref['rms_g'][1]} g and kurtosis {ref['kurtosis'][0]} to {ref['kurtosis'][1]}, while this "
+                         f"signal has RMS {ml.key_features.get('rms_g')} g and kurtosis "
+                         f"{ml.key_features.get('kurtosis')} [ML].")
+        parts += best_sentences(question + " cwru", ev, focus, 1, "Unknown")
+    elif focus == "model" and ml:
+        top = sorted(ml.class_probabilities.items(), key=lambda kv: -kv[1])[:3]
+        parts.append(f"The {ml.model_name} classified {ml.n_windows} windows of the signal and averaged their "
+                     f"probabilities: {', '.join(f'{k} {v:.2f}' for k, v in top)} [ML].")
+        parts.append(_ml_sentence(ml))
+        if p := _phys_sentence(ff):
+            parts.append(p)
+        parts += best_sentences(question, ev, focus, 1, ff_fault)
+    elif focus == "location" and ml:
+        if ml.fault_type == "Normal":
+            parts.append(_ml_sentence(ml) + " No damaged part is indicated.")
+        else:
+            parts.append(f"The damage is most likely on {_PART.get(ml.fault_type, ml.fault_type.lower())}: the "
+                         f"classifier predicts {ml.label} with calibrated confidence {ml.confidence:.2f} [ML].")
+            if p := _phys_sentence(ff):
+                parts.append(p)
+            parts += best_sentences(f"{ml.fault_type} defect", ev, "location", 1, fault)
+    elif focus == "severity":
+        if ml:
+            parts.append(_ml_sentence(ml))
+        parts += best_sentences(question + " severity remaining life stop", ev, focus, 3, fault)
+        parts += [s for s in best_sentences("keep running decision engineer trend stopped", ev, focus, 1)
+                  if s not in parts]
+    elif len(mentioned := [ft for ft, word in (("Inner race", "inner"), ("Outer race", "outer"),
+                                               ("Ball", "ball")) if re.search(rf"\b{word}\b", question.lower())]) > 1:
+        # comparison ("difference between inner and outer race faults"): the best sentences for each fault type
+        for ft in mentioned:
+            parts += [x for x in best_sentences(f"{ft} fault impacts", ev, "mechanism", 2, ft) if x not in parts]
+    else:  # diagnosis, actions, mechanism, safety, lubrication, replacement, anything else
+        if ml and focus in ("diagnosis", "actions"):
+            parts.append(_ml_sentence(ml))
+            if p := _phys_sentence(ff):
+                parts.append(p)
+        k = 2 if (ml and focus in ("diagnosis", "actions")) else 4
+        q = question
+        if fault not in ("Unknown", "Normal") and focus in ("diagnosis", "actions", "mechanism", "location"):
+            q += f" {fault}"
+        if focus == "mechanism" and fault not in ("Unknown", "Normal"):
+            q += " causes damage"
+        parts += best_sentences(q, ev, focus, k, ff_fault)
+    parts = [p for p in parts if p]
+    if not parts and ml:
+        parts.append(_ml_sentence(ml))
+    return " ".join(parts)

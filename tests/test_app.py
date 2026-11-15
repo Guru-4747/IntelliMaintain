@@ -40,8 +40,9 @@ def test_app_question_only_and_review(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "REVIEW_LOG", tmp_path / "reviews.csv")
     at = _app().run()
     at.radio[0].set_value("No signal (question only)").run()
-    next(b for b in at.button if "Run diagnosis" in b.label).click().run()
+    at.chat_input[0].set_value("how often should a bearing be relubricated?").run()
     assert not at.exception
+    assert any(m.name == "assistant" for m in at.chat_message)
     next(b for b in at.button if "Save review" in b.label).click().run()
     assert not at.exception
     assert any("Review saved" in s.value for s in at.success)
@@ -84,9 +85,19 @@ def test_app_handles_casual_and_small_talk_questions():
     at = _app().run()
     at.radio[0].set_value("No signal (question only)").run()
     for q in ("hiii", "how do i grease it pls", "best chicken biryani recipe"):
-        at.text_area[0].set_value(q).run()
-        next(b for b in at.button if "Run diagnosis" in b.label).click().run()
+        at.chat_input[0].set_value(q).run()
         assert not at.exception, q
+    replies = [m for m in at.chat_message if m.name == "assistant"]
+    assert len(replies) == 3 and len({" ".join(x.value for x in m.markdown) for m in replies}) == 3
+
+
+def test_app_chat_follow_up_questions():
+    at = _app().run()
+    next(b for b in at.button if "Run diagnosis" in b.label).click().run()
+    for q in ("what grease should I use?", "how often?", "can I keep running it until friday?"):
+        at.chat_input[0].set_value(q).run()
+        assert not at.exception, q
+    assert [m.name for m in at.chat_message].count("assistant") == 4
 
 
 def test_no_secrets_banner_when_running_locally(monkeypatch):

@@ -265,9 +265,9 @@
       "n_test": 1178,
       "per_class": {
         "B_007": {
-          "precision": 1.0,
+          "precision": 0.9915254237288136,
           "recall": 1.0,
-          "f1-score": 1.0,
+          "f1-score": 0.9957446808510638,
           "support": 117.0
         },
         "B_014": {
@@ -289,27 +289,27 @@
           "support": 119.0
         },
         "IR_014": {
-          "precision": 0.8854961832061069,
+          "precision": 0.8923076923076924,
           "recall": 0.9914529914529915,
-          "f1-score": 0.9354838709677419,
+          "f1-score": 0.9392712550607287,
           "support": 117.0
         },
         "IR_021": {
-          "precision": 0.959349593495935,
+          "precision": 0.9672131147540983,
           "recall": 1.0,
-          "f1-score": 0.979253112033195,
+          "f1-score": 0.9833333333333333,
           "support": 118.0
         },
         "Normal": {
-          "precision": 1.0,
-          "recall": 1.0,
-          "f1-score": 1.0,
+          "precision": 0.9914529914529915,
+          "recall": 0.9914529914529915,
+          "f1-score": 0.9914529914529915,
           "support": 117.0
         },
         "OR_007": {
           "precision": 1.0,
-          "recall": 0.9576271186440678,
-          "f1-score": 0.9783549783549783,
+          "recall": 0.9661016949152542,
+          "f1-score": 0.9827586206896551,
           "support": 118.0
         },
         "OR_014": {
@@ -326,19 +326,19 @@
         },
         "accuracy": 0.9813242784380306,
         "macro avg": {
-          "precision": 0.9826918605833693,
-          "recall": 0.9814555113657806,
-          "f1-score": 0.9813188661495709,
+          "precision": 0.9824572051375249,
+          "recall": 0.9814482681381984,
+          "f1-score": 0.9812657581527565,
           "support": 1178.0
         },
         "weighted avg": {
-          "precision": 0.9827515921015672,
+          "precision": 0.9825252055562531,
           "recall": 0.9813242784380306,
-          "f1-score": 0.9812812815060248,
+          "f1-score": 0.9812357360963152,
           "support": 1178.0
         }
       },
-      "fault_type_accuracy": 0.9949
+      "fault_type_accuracy": 0.9932
     }
   },
   "calibration_cross_load": {
@@ -347,7 +347,7 @@
       "brier": 0.0373
     },
     "isotonic": {
-      "ece": 0.0163,
+      "ece": 0.0164,
       "brier": 0.0025,
       "accuracy": 1.0
     }
@@ -398,8 +398,8 @@
       "Outer race": 0.667
     }
   },
-  "model_path": "models\\classifier.joblib",
-  "train_seconds": 38.5,
+  "model_path": "models/classifier.joblib",
+  "train_seconds": 9.3,
   "chart_data": {
     "cm_random_split": {
       "title": "RandomForest - random 80/20 split",
@@ -714,14 +714,14 @@
       },
       "RF isotonic": {
         "confidence": [
-          0.8649,
-          0.9875
+          0.8648,
+          0.9874
         ],
         "accuracy": [
           1.0,
           1.0
         ],
-        "ece": 0.0163
+        "ece": 0.0164
       }
     },
     "cm_cross_severity": {

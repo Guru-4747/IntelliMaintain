@@ -85,4 +85,11 @@ LLM_PROVIDER = os.getenv("IM_LLM_PROVIDER") or (
 LLM_MODEL = os.getenv("IM_LLM_MODEL", "")
 LLM_TEMPERATURE = float(os.getenv("IM_LLM_TEMPERATURE", "0.1"))
 LLM_TIMEOUT = int(os.getenv("IM_LLM_TIMEOUT", "120"))
-MAX_AGENT_STEPS = 5         # hard cap on tool calls per diagnosis
+MAX_AGENT_STEPS = 6         # hard cap on tool calls per diagnosis
+
+# ----------------------------------------------------------------- online evidence
+# off = documents only (reproducible evaluation) | auto = search the web when the documents are not enough |
+# always = add web evidence to every answer. Web passages are cited and verified like document passages.
+WEB_SEARCH = os.getenv("IM_WEB_SEARCH", "off").lower()
+WEB_TOP_K = int(os.getenv("IM_WEB_TOP_K", "3"))
+WEB_TIMEOUT = int(os.getenv("IM_WEB_TIMEOUT", "8"))

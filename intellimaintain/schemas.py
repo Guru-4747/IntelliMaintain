@@ -29,6 +29,8 @@ class ClassifyResult(BaseModel):
     model_name: str = "RandomForest"
     similar_cases: list[dict[str, Any]] = Field(
         default_factory=list, description="Most similar recordings in the CWRU training dataset (case-based evidence)")
+    cwru_reference: dict[str, Any] = Field(
+        default_factory=dict, description="Range of RMS / kurtosis / crest factor of the predicted class in CWRU")
 
 
 class EvidenceChunk(BaseModel):
@@ -39,8 +41,9 @@ class EvidenceChunk(BaseModel):
     page: int = Field(..., ge=1, description="1-based page number (section number for .md files)")
     text: str
     score: float = 0.0
-    retriever: str = Field("hybrid", description="dense | bm25 | hybrid | rerank")
+    retriever: str = Field("hybrid", description="dense | bm25 | hybrid | rerank | web")
     title: str = ""
+    url: str = Field("", description="Link to the online source (web evidence only)")
 
 
 class FaultFrequencies(BaseModel):
@@ -77,7 +80,11 @@ class Diagnosis(BaseModel):
     fault_type: str = Field(..., description="Final fault type or 'Unknown'")
     confidence: float = 0.0
     summary: str = ""
+    answer: str = Field("", description="Direct, conversational reply to the question that was asked (cited)")
+    question_focus: str = Field("diagnosis", description="What the question asks about (see nlu.FOCUS_PATTERNS)")
     explanation: str = Field("", description="Cited explanation; every claim ends with [n]")
+    fault_mechanism: str = Field("", description="Cited, step-by-step explanation of how the fault develops and "
+                                                 "why it produces the observed vibration")
     recommended_actions: list[str] = Field(default_factory=list)
     evidence: list[EvidenceChunk] = Field(default_factory=list)
     ml_result: Optional[ClassifyResult] = None
@@ -91,5 +98,6 @@ class Diagnosis(BaseModel):
     llm_provider: str = "offline"
     llm_model: str = ""
     config_name: str = Field("full", description="Ablation configuration that produced this diagnosis")
+    web_search: str = Field("off", description="Online evidence setting: off | auto | always")
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds"))
     review_status: Literal["pending", "accepted", "rejected", "edited"] = "pending"

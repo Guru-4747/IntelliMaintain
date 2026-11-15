@@ -2,8 +2,8 @@
   "embedder": "lsa",
   "embed_model": "tfidf-lsa-256",
   "dim": 256,
-  "n_chunks": 299,
-  "n_pages": 198,
+  "n_chunks": 325,
+  "n_pages": 224,
   "sources": [
     "arxiv_1511.03174_spectrum_searching_bearing.pdf",
     "arxiv_2003.03315_dl_rotating_machinery_benchmark.pdf",
@@ -17,11 +17,14 @@
     "kb08_condition_monitoring_program.md",
     "kb09_synthetic_maintenance_logs.md",
     "kb10_non_bearing_vibration_sources.md",
+    "kb11_fault_mechanisms.md",
+    "kb12_cwru_dataset_in_intellimaintain.md",
+    "kb13_intellimaintain_faq.md",
     "nsk_bearing_doctor.pdf",
     "nsk_bearing_handling_e7005c.pdf",
     "skf_bearing_damage_training_transcript.pdf"
   ],
   "chunk_tokens": 600,
   "chunk_overlap": 100,
-  "build_seconds": 11.3
+  "build_seconds": 3.2
 }
