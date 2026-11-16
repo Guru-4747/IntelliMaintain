@@ -13,6 +13,7 @@ import re
 import numpy as np
 
 from .. import config
+from ..ml.physics import STRONG_SNR
 from ..rag import web as rag_web
 from ..rag.retriever import load_retriever
 from ..schemas import ClassifyResult, Diagnosis, EvidenceChunk, FaultFrequencies, ToolCall
@@ -414,12 +415,28 @@ class DiagnosisAgent:
         if expl and coverage < 0.8:
             state.warnings.append(f"Only {coverage:.0%} of explanation sentences are cited - review carefully.")
         insufficient = bool(out.get("insufficient_evidence", False)) or "insufficient evidence" in summary.lower()
+        fault_source = ""
+        if ml is not None:
+            fault_source = "classifier + physics" if ff is not None and ff.consistency == "consistent" else "classifier"
         if self.conflict_policy == "abstain" and ff is not None and ff.consistency == "conflict" and ml is not None:
-            # governance rule: never hand a contradicted label to the reviewer as the final answer
-            phys = ff.physics_suggests or "no defect frequency"
-            summary = (f"Uncertain - analyst verification required: the classifier predicts {ml.fault_type} [ML] "
-                       f"but the envelope spectrum points to {phys} [PHYS]. " + summary)
-            fault = "Unknown"
+            phys = ff.physics_suggests
+            phys_snr = ff.envelope_match.get(phys, 0.0) if phys else 0.0
+            if ml.low_confidence and phys and phys_snr >= STRONG_SNR:
+                # the classifier itself is unsure, and the physics evidence is strong: report the physics verdict,
+                # clearly marked, instead of "Unknown" (a confident but contradicted label still gives "Unknown")
+                lead = (f"Most likely {phys.lower()} fault [PHYS]: the envelope spectrum shows clear {phys.lower()} "
+                        f"defect frequencies (SNR {phys_snr:.1f}), while the classifier is unsure ({ml.label}, "
+                        f"confidence {ml.confidence:.2f}) [ML]. Verify before acting.")
+                summary = lead + " " + summary
+                state.answer = lead + (" " + state.answer if state.answer else "")
+                state.warnings.append(f"Fault type taken from the physics check because the classifier is unsure "
+                                      f"(confidence {ml.confidence:.2f}).")
+                fault, fault_source = phys, "physics check (classifier unsure)"
+            else:
+                # governance rule: never hand a contradicted label to the reviewer as the final answer
+                summary = (f"Uncertain - analyst verification required: the classifier predicts {ml.fault_type} [ML] "
+                           f"but the envelope spectrum points to {phys or 'no defect frequency'} [PHYS]. " + summary)
+                fault, fault_source = "Unknown", "undecided (conflict)"
 
         return Diagnosis(
             question=state.question, fault_type=fault,
@@ -427,6 +444,7 @@ class DiagnosisAgent:
             summary=summary.strip(), explanation=expl.strip(), recommended_actions=[a for a in actions if a],
             fault_mechanism=state.mechanism.strip(), web_search=self.web,
             answer=(state.answer.strip() or self._no_answer(state, summary)), question_focus=state.nq.focus,
+            fault_source=fault_source,
             evidence=ev, ml_result=ml, fault_frequencies=ff, insufficient_evidence=insufficient,
             warnings=[redact(w) for w in dict.fromkeys(state.warnings)], citation_coverage=coverage,
             grounding_score=grounding, answer_source=answer_source,

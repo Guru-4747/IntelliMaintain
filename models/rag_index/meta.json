@@ -29,5 +29,5 @@
   "min_relevance": 0.6786,
   "probe_off_topic_max": 0.5774,
   "probe_on_topic_min": 0.7799,
-  "build_seconds": 41.1
+  "build_seconds": 40.9
 }

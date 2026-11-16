@@ -27,6 +27,7 @@ import results_dashboard  # noqa: E402  (Model & evaluation results tab)
 from intellimaintain import config  # noqa: E402
 from intellimaintain.agent.agent import DiagnosisAgent  # noqa: E402
 from intellimaintain.agent.llm import DEFAULT_MODELS, LLM, SUGGESTED_GEMINI_MODELS, gemini_key_available  # noqa: E402
+from intellimaintain.ml import autodetect  # noqa: E402
 from intellimaintain.ml.classifier import cnn_ready  # noqa: E402
 from intellimaintain.ml.physics import defect_frequencies, envelope_spectrum  # noqa: E402
 from intellimaintain.ml.spectrogram import signal_spectrogram  # noqa: E402
@@ -252,6 +253,7 @@ with tab_diag:
         source = st.radio("Signal source", ["Demo sample", "Upload file", "No signal (question only)"],
                           horizontal=True)
         x = fs = rpm_meta = None
+        sig_name = ""
         if source == "Demo sample":
             samples = sorted(config.SAMPLES_DIR.glob("*.csv"))
             if samples:
@@ -259,6 +261,7 @@ with tab_diag:
                 pick = st.selectbox("Sample", names)
                 sig = load_signal(samples[names.index(pick)])
                 x, fs, rpm_meta = sig.x, sig.fs, sig.rpm
+                sig_name = samples[names.index(pick)].name
                 st.caption(" · ".join(f"{k}={v}" for k, v in sig.meta.items()))
             else:
                 st.warning("No demo samples. Run `python scripts/make_samples.py`.")
@@ -267,14 +270,38 @@ with tab_diag:
             if up is not None:
                 try:
                     x, fs, rpm_meta, col = read_upload(up)
+                    sig_name = f"{up.name} {col}"
                     st.caption(f"Loaded column '{col}' with {len(x):,} samples.")
                 except Exception as e:  # noqa: BLE001
                     st.error(f"Could not read the file: {e}")
     with c2:
-        fs_in = st.number_input("Sampling rate [Hz]", min_value=1000, max_value=200000,
-                                value=int(fs or config.FS), step=1000, disabled=source.startswith("No"))
-        rpm_in = st.number_input("Shaft speed [rpm]", min_value=100.0, max_value=20000.0,
-                                 value=float(rpm_meta or 1772.0), step=1.0, disabled=source.startswith("No"))
+        # Sampling rate and shaft speed: detected automatically from the file (header, time column, file name,
+        # CWRU file number) or, for the speed, from the vibration spectrum; "Manual" lets the user type them.
+        no_signal = x is None
+        sid = "none" if no_signal else f"{len(x)}_{float(np.round(np.asarray(x[:4096]).sum(), 4))}_{sig_name}"
+        det = st.session_state.get("det_cache", {}).get(sid)
+        if det is None and not no_signal:
+            det = autodetect.detect(np.asarray(x, dtype=np.float64), sig_name, fs_file=fs, rpm_file=rpm_meta)
+            st.session_state["det_cache"] = {sid: det}
+        mode = st.radio("Sampling rate & shaft speed", ["Auto-detect", "Manual"], horizontal=True,
+                        disabled=no_signal, key="setting_mode",
+                        help="Auto-detect reads them from the file (header, time column, file name, CWRU number) "
+                             "and estimates the shaft speed from the vibration spectrum if the file does not say.")
+        auto = mode == "Auto-detect" and det is not None
+        fs_default = det.fs if det else int(fs or config.FS)
+        rpm_default = det.rpm if det else float(rpm_meta or 1772.0)
+        fs_in = st.number_input("Sampling rate [Hz]", min_value=1000, max_value=200000, value=int(fs_default),
+                                step=1000, disabled=no_signal or auto, key=f"fs_{mode}_{sid}")
+        rpm_in = st.number_input("Shaft speed [rpm]", min_value=100.0, max_value=20000.0, value=float(rpm_default),
+                                 step=1.0, disabled=no_signal or auto, key=f"rpm_{mode}_{sid}")
+        if auto:
+            fs_in, rpm_in = det.fs, det.rpm
+            st.caption(f"Sampling rate: {det.fs_source}  \nShaft speed: {det.rpm_source}")
+            if det.rpm_confidence == "low" or "check" in det.fs_source:
+                st.warning("Not all settings could be read from the file. Check them, or switch to Manual and "
+                           "type the values from the machine's nameplate or data logger.")
+        elif det is not None:
+            st.caption(f"Detected: {det.fs} Hz, {det.rpm:.0f} rpm — type your own values to override.")
 
     if x is not None:
         with st.expander("Signal preview", expanded=False):
@@ -368,8 +395,11 @@ with tab_diag:
         m1, m2, m3, m4 = st.columns(4)
         color = FAULT_COLOR.get(d.fault_type, theme.MUTED)
         fault_icon = ""
-        m1.markdown(theme.card_html(fault_icon, "Fault type", d.fault_type,
-                                    "Advisory — human review required", color=color), unsafe_allow_html=True)
+        sub = {"physics check (classifier unsure)": "From the physics check — classifier unsure, verify",
+               "undecided (conflict)": "Classifier and physics disagree — analyst review"}.get(
+            d.fault_source, "Advisory — human review required")
+        m1.markdown(theme.card_html(fault_icon, "Fault type", d.fault_type, sub, color=color),
+                    unsafe_allow_html=True)
         if d.ml_result:
             conf = d.ml_result.confidence
             conf_color = theme.GREEN if conf >= 0.85 else theme.ORANGE if conf >= config.CONFIDENCE_THRESHOLD \

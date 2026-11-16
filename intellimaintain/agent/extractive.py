@@ -328,8 +328,8 @@ def focused_answer(question: str, focus: str, ml: ClassifyResult | None, ff: Fau
             parts.append(f"In the CWRU data, class {ref['cwru_class']} has a kurtosis of {lo} to {hi}, so this "
                          f"signal is {where} that range [ML].")
         if "anomal" in question.lower():
-            parts.append(f"The anomaly score is {ml.anomaly_score:.2f}, on a scale from 0 (looks like the training "
-                         f"data) to 1 (unusual) [ML].")
+            parts.append(f"The anomaly score is {ml.anomaly_score:.2f}, on a scale from 0 (looks like a healthy "
+                         f"bearing) to 1 (far from healthy) [ML].")
         parts += best_sentences(question + " kurtosis healthy impacts", ev, focus, 2, ff_fault)
     elif focus == "frequencies" and ff:
         parts.append(f"At {ff.rpm:.0f} rpm the shaft turns at {ff.shaft_hz:.2f} Hz, which gives BPFO "

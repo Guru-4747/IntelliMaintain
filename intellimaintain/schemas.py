@@ -82,6 +82,8 @@ class Diagnosis(BaseModel):
     summary: str = ""
     answer: str = Field("", description="Direct, conversational reply to the question that was asked (cited)")
     question_focus: str = Field("diagnosis", description="What the question asks about (see nlu.FOCUS_PATTERNS)")
+    fault_source: str = Field("", description="Where the fault type comes from: classifier | classifier + physics | "
+                                              "physics check (classifier unsure) | undecided (conflict)")
     explanation: str = Field("", description="Cited explanation; every claim ends with [n]")
     fault_mechanism: str = Field("", description="Cited, step-by-step explanation of how the fault develops and "
                                                  "why it produces the observed vibration")

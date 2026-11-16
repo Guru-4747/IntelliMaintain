@@ -33,6 +33,23 @@ class LoadedSignal:
     column: str = ""
 
 
+COMMON_FS = (1000, 2000, 2048, 2560, 4000, 4096, 5000, 5120, 8000, 8192, 10000, 10240, 12000, 12800, 16000, 16384,
+             20000, 20480, 24000, 25000, 25600, 32000, 32768, 40000, 44100, 48000, 50000, 51200, 64000, 65536,
+             96000, 100000, 102400, 128000, 192000)
+
+
+def _snap_fs(fs: float) -> int:
+    """Round to a standard data-acquisition rate when within 1 % (times in CSV files are often rounded)."""
+    best = min(COMMON_FS, key=lambda c: abs(c - fs))
+    return int(best) if abs(best - fs) / best < 0.01 else int(round(fs))
+
+
+def _is_time_column(name: str) -> bool:
+    """time, t, time_s, time [s], Time (sec), timestamp, seconds ... (in seconds; milliseconds are handled below)"""
+    n = str(name).strip().lower()
+    return n in TIME_NAMES or bool(re.match(r"^(time|t)([ _\-\[(].*)?$", n)) or n in ("time_ms", "t_ms")
+
+
 def _read_bytes(src: str | Path | bytes | BinaryIO) -> bytes:
     if isinstance(src, bytes):
         return src
@@ -73,17 +90,21 @@ def load_signal_csv(src: str | Path | bytes | BinaryIO) -> LoadedSignal:
         if col:
             break
     if col is None:
-        candidates = [c for c in numeric_cols if c.lower() not in TIME_NAMES]
+        candidates = [c for c in numeric_cols if not _is_time_column(c)]
         col = candidates[0] if candidates else numeric_cols[0]
     x = num[col].dropna().to_numpy(dtype=np.float64)
     fs = int(float(meta["fs"])) if "fs" in meta else None
     # infer fs from a time column if present
     if fs is None:
-        tcols = [c for c in numeric_cols if c.lower() in ("time", "t", "seconds", "sec")]
+        tcols = [c for c in numeric_cols if _is_time_column(c)]
         if tcols:
             t = num[tcols[0]].dropna().to_numpy()
             if len(t) > 2 and np.all(np.diff(t[:100]) > 0):
-                fs = int(round(1.0 / np.median(np.diff(t[:1000]))))
+                m = min(len(t), 200_000)
+                dt = float(t[m - 1] - t[0]) / (m - 1)   # average over many samples: robust to rounded times
+                if "ms" in tcols[0].lower():
+                    dt /= 1000.0
+                fs = _snap_fs(1.0 / dt)
     rpm = float(meta["rpm"]) if "rpm" in meta else None
     return LoadedSignal(x=x, fs=fs, rpm=rpm, meta=meta, column=str(col))
 

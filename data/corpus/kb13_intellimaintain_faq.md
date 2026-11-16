@@ -21,13 +21,13 @@ A citation in square brackets shows where each statement comes from. [ML] means 
 
 The confidence is the calibrated probability of the predicted class, averaged over all 2048-sample windows of the signal. A confidence of 0.95 means that, on test data, predictions with this confidence were correct about 95 percent of the time. Below 0.60 the result is flagged as low confidence and should be verified by an analyst.
 
-The anomaly score comes from an Isolation Forest trained on the CWRU recordings. It ranges from 0, which means the signal looks like the data the model was trained on, to 1, which means the signal is unusual. A high anomaly score warns that the signal may come from a machine or condition the model has never seen, even if the confidence is high.
+The anomaly score comes from an Isolation Forest trained only on the healthy (Normal) CWRU recordings. It measures how far the signal is from a healthy bearing: 0 means it looks like a healthy bearing and 1 means it is far from healthy. Every faulty CWRU recording scores close to 1, so a high anomaly score supports a fault diagnosis. It also works without the classifier: a signal with a high anomaly score that the classifier calls Normal should be checked by an analyst.
 
 # 4. What the physics cross-check means
 
 The physics check calculates the defect frequencies BPFO, BPFI and BSF from the bearing geometry and the shaft speed, then measures how strongly each frequency and its harmonics stand out in the envelope spectrum. A ratio above 5 means the frequency is present. If the physics check points to the same fault as the classifier, the result is consistent. If it points to a different fault, the result is a conflict and the answer asks for analyst verification instead of giving a fault type. If no frequency stands out, the result is inconclusive, which is common for normal bearings and for ball faults.
 
-The shaft speed entered in the app directly changes the defect frequencies, so a wrong speed can make the physics check miss a real fault. The sampling rate must match the recording, because the signal is resampled to 12 kHz before analysis.
+The shaft speed directly changes the defect frequencies, so a wrong speed can make the physics check miss a real fault. The sampling rate must match the recording, because the signal is resampled to 12 kHz before analysis. In Auto-detect mode the app reads both values from the file when it can: a header line such as # fs=12000 or # rpm=1730, a time column, the file name (for example 48k, 1750rpm or 3hp) or a CWRU file number. If the file does not give the shaft speed, the app estimates it from the vibration spectrum by finding the shaft-speed line and ignoring 50 or 60 Hz mains hum; on the 40 CWRU recordings this estimate is within 3 percent for 95 percent of them. When no clear line is found, the app assumes 1772 rpm and asks the user to check. In Manual mode the user types both values, for example from the motor nameplate or the data logger.
 
 # 5. Which files can be uploaded
 
